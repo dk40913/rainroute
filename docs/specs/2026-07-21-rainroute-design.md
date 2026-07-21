@@ -75,6 +75,13 @@
 - **Phase 1 部署 = NUC**：FastAPI 直接跑在使用者既有的 NUC 上（本來就開著）。
 - **未來部署 = 免費雲端**（Render / Railway / Fly.io / Cloud Run，閒置自動休眠）。因為上面原則，搬過去只需改環境變數 + 部署設定。
 
+### 外網連線（重要）
+本 App 的使用情境是**人在外面**（出門前／騎車途中）查雨，此時手機在行動網路上、不在家裡區網。因此後端掛 NUC 時，**必須讓手機從外網連得到 NUC**，否則出了家門即失效。
+
+- **採用 Tailscale**（預設方案）：NUC 與手機各安裝一次，組成私有 mesh 網路；手機在任何地方都能用 NUC 的 Tailscale IP（`100.x.x.x`）連到後端。免費、免開 port、加密。
+- App 端 `BACKEND_BASE_URL` 指向 NUC 的 Tailscale IP。未來搬雲端時只改此值，符合遷移原則。
+- 備選：Cloudflare Tunnel（公開網址）、路由器 port forwarding + DDNS（較不安全，不推薦）。
+
 ---
 
 ## 5. 核心機制：路線雨區判斷（本 App 靈魂）
