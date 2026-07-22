@@ -21,12 +21,12 @@ ORS_JSON = {
 @respx.mock
 def test_plan_route_swaps_to_latlng():
     respx.post(
-        "https://api.openrouteservice.org/v2/directions/driving-car/geojson"
+        "https://api.heigit.org/openrouteservice/v2/directions/driving-car/geojson"
     ).mock(return_value=httpx.Response(200, json=ORS_JSON))
     out = asyncio.run(
         plan_route(LatLng(lat=25.0478, lng=121.5170),
                    LatLng(lat=25.0600, lng=121.5300),
-                   Settings(ors_api_key="k"))
+                   Settings(ors_api_key="k", routing_backend="ors"))
     )
     assert out.polyline[0] == (25.0478, 121.5170)  # (lat, lng)
     assert out.distance_m == 1850.0 and out.duration_s == 300.0
@@ -35,13 +35,13 @@ def test_plan_route_swaps_to_latlng():
 @respx.mock
 def test_plan_route_raises_when_no_features():
     respx.post(
-        "https://api.openrouteservice.org/v2/directions/driving-car/geojson"
+        "https://api.heigit.org/openrouteservice/v2/directions/driving-car/geojson"
     ).mock(return_value=httpx.Response(200, json={"features": []}))
     with pytest.raises(RouteNotFoundError):
         asyncio.run(
             plan_route(LatLng(lat=25.0478, lng=121.5170),
                        LatLng(lat=25.0600, lng=121.5300),
-                       Settings(ors_api_key="k"))
+                       Settings(ors_api_key="k", routing_backend="ors"))
         )
 
 

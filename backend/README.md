@@ -8,7 +8,8 @@ cd backend
 uv sync --extra dev
 cp .env.example .env   # then fill in RAINROUTE_CWA_API_KEY and RAINROUTE_ORS_API_KEY
 ```
-Get keys: CWA https://opendata.cwa.gov.tw/ (free register), OpenRouteService https://openrouteservice.org/dev (free).
+Get keys: CWA https://opendata.cwa.gov.tw/ (free register), OpenRouteService https://account.heigit.org/ (free; API moved to api.heigit.org — the old api.openrouteservice.org shuts off 2026-08-24).
+No ORS key yet? Set `RAINROUTE_ROUTING_BACKEND=osrm` to route via the key-less public OSRM server.
 
 ## Run
 ```bash

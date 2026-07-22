@@ -9,7 +9,9 @@ class Settings(BaseSettings):
     ors_api_key: str = ""
     nominatim_user_agent: str = "rainroute-dev (set-me@example.com)"
     nominatim_base_url: str = "https://nominatim.openstreetmap.org"
-    ors_base_url: str = "https://api.openrouteservice.org"
+    # api.openrouteservice.org is deprecated and shuts off 2026-08-24;
+    # HeiGIT's unified URL keeps the same /v2/directions/... paths under this base.
+    ors_base_url: str = "https://api.heigit.org/openrouteservice"
     osrm_base_url: str = "https://router.project-osrm.org"
     routing_backend: str = "ors"  # "ors" | "osrm" (key-less fallback)
     cwa_base_url: str = "https://opendata.cwa.gov.tw"
