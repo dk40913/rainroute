@@ -20,3 +20,4 @@ def test_geocode_returns_candidates():
     assert out[0].name.startswith("台北車站")
     assert out[0].lat == 25.0478 and out[0].lng == 121.5170
     assert route.calls.last.request.headers["user-agent"] == "rainroute-test"
+    assert route.calls.last.request.url.params["accept-language"] == "zh-TW"
