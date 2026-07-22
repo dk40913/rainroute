@@ -7,6 +7,11 @@ const config: ExpoConfig = {
   orientation: "portrait",
   ios: {
     bundleIdentifier: "com.rainroute.app",
+    infoPlist: {
+      // The backend is plain http on a LAN/Tailscale IP (no TLS); ATS blocks
+      // http by default on real devices, so allow it for this self-hosted app.
+      NSAppTransportSecurity: { NSAllowsArbitraryLoads: true },
+    },
   },
   android: {
     package: "com.rainroute.app",
