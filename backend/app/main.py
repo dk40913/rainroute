@@ -1,6 +1,6 @@
-from io import BytesIO
-from fastapi import FastAPI
-from fastapi.responses import Response
+import httpx
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse, Response
 
 from app.config import get_settings
 from app.deps import get_radar_client
@@ -9,10 +9,25 @@ from app.models import (
     RainResponse, Overlay,
 )
 from app.geocode import geocode
-from app.routing import plan_route
+from app.routing import plan_route, RouteNotFoundError
 from app.classify import classify_route
 
 app = FastAPI(title="RainRoute API")
+
+
+@app.exception_handler(httpx.HTTPError)
+async def httpx_error_handler(request: Request, exc: httpx.HTTPError) -> JSONResponse:
+    try:
+        host = exc.request.url.host
+    except RuntimeError:
+        host = None
+    detail = f"upstream service error ({host})" if host else "upstream service error"
+    return JSONResponse(status_code=502, content={"detail": detail})
+
+
+@app.exception_handler(RouteNotFoundError)
+async def route_not_found_handler(request: Request, exc: RouteNotFoundError) -> JSONResponse:
+    return JSONResponse(status_code=422, content={"detail": "no route found between origin and destination"})
 
 
 @app.get("/health")
@@ -23,9 +38,7 @@ async def health() -> dict[str, str]:
 @app.get("/radar.png")
 async def radar_png() -> Response:
     radar = await get_radar_client().fetch()
-    buf = BytesIO()
-    radar.image.save(buf, format="PNG")
-    return Response(content=buf.getvalue(), media_type="image/png")
+    return Response(content=radar.png_bytes, media_type="image/png")
 
 
 @app.post("/geocode")

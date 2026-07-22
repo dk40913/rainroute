@@ -37,11 +37,12 @@ def _clock():
 
 @respx.mock
 def test_fetch_builds_radar_image():
+    raw = _png_bytes((255, 0, 0, 255))
     respx.get("https://opendata.cwa.gov.tw/fileapi/v1/opendataapi/O-A0058-003").mock(
         return_value=httpx.Response(200, json=META)
     )
     respx.get("https://cwa.example/radar.png").mock(
-        return_value=httpx.Response(200, content=_png_bytes((255, 0, 0, 255)))
+        return_value=httpx.Response(200, content=raw)
     )
     client = RadarClient(Settings(cwa_api_key="k"))
     import asyncio
@@ -49,6 +50,7 @@ def test_fetch_builds_radar_image():
     assert radar.geo.left_lon == 115.0 and radar.geo.bottom_lat == 17.75
     assert radar.time == "2026-07-21T14:30:00+08:00"
     assert radar.image.getpixel((0, 0))[:3] == (255, 0, 0)
+    assert radar.png_bytes == raw
 
 
 @respx.mock

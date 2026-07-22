@@ -12,6 +12,7 @@ class RadarImage:
     image: Image.Image
     geo: GeoBox
     time: str
+    png_bytes: bytes = b""
 
     def level_at(self, lat, lng) -> RainLevel:
         w, h = self.image.size

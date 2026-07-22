@@ -1,10 +1,12 @@
 from unittest.mock import AsyncMock, patch
+import httpx
 from PIL import Image
 from fastapi.testclient import TestClient
 
 from app.main import app
 from app.models import GeoBox, GeocodeCandidate, RouteResponse
 from app.classify import RadarImage
+from app.routing import RouteNotFoundError
 
 GEO = GeoBox(left_lon=115.0, right_lon=126.5, top_lat=29.25, bottom_lat=17.75)
 client = TestClient(app)
@@ -28,6 +30,24 @@ def test_route_endpoint():
         })
     assert resp.status_code == 200
     assert resp.json()["distance_m"] == 1000.0
+
+
+def test_route_endpoint_upstream_error():
+    with patch("app.main.plan_route", new=AsyncMock(side_effect=httpx.ConnectError("boom"))):
+        resp = client.post("/route", json={
+            "origin": {"lat": 25.0, "lng": 121.0},
+            "destination": {"lat": 25.05, "lng": 121.0},
+        })
+    assert resp.status_code == 502
+
+
+def test_route_endpoint_no_route_found():
+    with patch("app.main.plan_route", new=AsyncMock(side_effect=RouteNotFoundError())):
+        resp = client.post("/route", json={
+            "origin": {"lat": 25.0, "lng": 121.0},
+            "destination": {"lat": 25.05, "lng": 121.0},
+        })
+    assert resp.status_code == 422
 
 
 def test_rain_endpoint_heavy():

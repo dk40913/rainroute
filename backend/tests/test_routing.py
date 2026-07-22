@@ -1,10 +1,11 @@
 import asyncio
 import httpx
+import pytest
 import respx
 
 from app.config import Settings
 from app.models import LatLng
-from app.routing import plan_route
+from app.routing import plan_route, RouteNotFoundError
 
 ORS_JSON = {
     "features": [
@@ -29,3 +30,16 @@ def test_plan_route_swaps_to_latlng():
     )
     assert out.polyline[0] == (25.0478, 121.5170)  # (lat, lng)
     assert out.distance_m == 1850.0 and out.duration_s == 300.0
+
+
+@respx.mock
+def test_plan_route_raises_when_no_features():
+    respx.post(
+        "https://api.openrouteservice.org/v2/directions/driving-car/geojson"
+    ).mock(return_value=httpx.Response(200, json={"features": []}))
+    with pytest.raises(RouteNotFoundError):
+        asyncio.run(
+            plan_route(LatLng(lat=25.0478, lng=121.5170),
+                       LatLng(lat=25.0600, lng=121.5300),
+                       Settings(ors_api_key="k"))
+        )

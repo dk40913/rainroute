@@ -1,3 +1,4 @@
+import asyncio
 import time
 from io import BytesIO
 from typing import Callable, Optional
@@ -42,15 +43,16 @@ class RadarClient:
             return self._cache
         async with httpx.AsyncClient(timeout=30) as http:
             meta_resp = await http.get(
-                f"https://opendata.cwa.gov.tw/fileapi/v1/opendataapi/{CWA_DATAID}",
+                f"{self._settings.cwa_base_url}/fileapi/v1/opendataapi/{CWA_DATAID}",
                 params={"Authorization": self._settings.cwa_api_key, "format": "JSON"},
             )
             meta_resp.raise_for_status()
             meta = meta_resp.json()
             img_resp = await http.get(self._image_url(meta))
             img_resp.raise_for_status()
-        image = Image.open(BytesIO(img_resp.content)).convert("RGBA")
-        radar = RadarImage(image=image, geo=self._parse_geo(meta), time=self._issue_time(meta))
+        png_bytes = img_resp.content
+        image = await asyncio.to_thread(lambda: Image.open(BytesIO(png_bytes)).convert("RGBA"))
+        radar = RadarImage(image=image, geo=self._parse_geo(meta), time=self._issue_time(meta), png_bytes=png_bytes)
         self._cache = radar
         self._fetched_at = self._now()
         return radar

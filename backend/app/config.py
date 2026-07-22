@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     nominatim_user_agent: str = "rainroute-dev (set-me@example.com)"
     nominatim_base_url: str = "https://nominatim.openstreetmap.org"
     ors_base_url: str = "https://api.openrouteservice.org"
+    cwa_base_url: str = "https://opendata.cwa.gov.tw"
     radar_cache_ttl_s: int = 600
     sample_interval_m: float = 500.0
 
