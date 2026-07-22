@@ -4,23 +4,21 @@ import { RouteSearch } from "./components/RouteSearch";
 import { RainMap } from "./components/RainMap";
 import { RainLegend } from "./components/RainLegend";
 import { VerdictBanner } from "./components/VerdictBanner";
-import { geocode, planRoute, checkRain } from "./api";
-import { RouteResult, RainResult } from "./types";
+import { planRoute, checkRain } from "./api";
+import { RouteResult, RainResult, GeocodeCandidate } from "./types";
 
 export function MainScreen() {
   const [route, setRoute] = useState<RouteResult | null>(null);
   const [rain, setRain] = useState<RainResult | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function onSubmit(originText: string, destText: string) {
+  async function onSubmit(origin: GeocodeCandidate, destination: GeocodeCandidate) {
     if (loading) return;
     setRoute(null);
     setRain(null);
     setLoading(true);
     try {
-      const [o, d] = await Promise.all([geocode(originText), geocode(destText)]);
-      if (!o.length || !d.length) throw new Error("找不到地點");
-      const r = await planRoute({ lat: o[0].lat, lng: o[0].lng }, { lat: d[0].lat, lng: d[0].lng });
+      const r = await planRoute({ lat: origin.lat, lng: origin.lng }, { lat: destination.lat, lng: destination.lng });
       setRoute(r);
       setRain(await checkRain(r.polyline));
     } catch (e: any) {
