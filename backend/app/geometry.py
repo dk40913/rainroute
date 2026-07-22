@@ -11,11 +11,11 @@ def haversine_m(a: tuple[float, float], b: tuple[float, float]) -> float:
     return 2 * _EARTH_R * math.asin(math.sqrt(h))
 
 
-def _interpolate(a, b, frac):
+def _interpolate(a: tuple[float, float], b: tuple[float, float], frac: float) -> tuple[float, float]:
     return (a[0] + (b[0] - a[0]) * frac, a[1] + (b[1] - a[1]) * frac)
 
 
-def resample_polyline(polyline, interval_m):
+def resample_polyline(polyline: list[tuple[float, float]], interval_m: float) -> list[tuple[float, float]]:
     if len(polyline) <= 1:
         return list(polyline)
 
