@@ -37,17 +37,21 @@ function GeocodeField({
     try {
       const candidates = await geocode(text);
       onChange((prev) =>
-        prev.text.trim() !== text ? prev : { ...prev, loading: false, candidates, searched: true, lastQueried: text },
+        prev.text.trim() !== text
+          ? { ...prev, loading: false }
+          : { ...prev, loading: false, candidates, searched: true, lastQueried: text },
       );
     } catch {
       onChange((prev) =>
-        prev.text.trim() !== text ? prev : { ...prev, loading: false, candidates: [], searched: true, lastQueried: text },
+        prev.text.trim() !== text
+          ? { ...prev, loading: false }
+          : { ...prev, loading: false, candidates: [], searched: true, lastQueried: text },
       );
     }
   }
 
   function handleChangeText(text: string) {
-    onChange((prev) => ({ ...prev, text, candidates: [], selected: null, searched: false }));
+    onChange((prev) => ({ ...prev, text, candidates: [], selected: null, searched: false, lastQueried: null }));
   }
 
   function handleSelect(candidate: GeocodeCandidate) {

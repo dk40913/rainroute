@@ -9,7 +9,7 @@ const ITEMS = [
 
 export function RainLegend() {
   return (
-    <View style={styles.card}>
+    <View style={styles.card} pointerEvents="none">
       {ITEMS.map((item) => (
         <View key={item.label} style={styles.row}>
           <View style={[styles.swatch, { backgroundColor: item.color }]} />

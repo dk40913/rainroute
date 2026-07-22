@@ -8,3 +8,8 @@ test("renders the three rain intensity labels", async () => {
   expect(getByText("中雨")).toBeTruthy();
   expect(getByText("大雨")).toBeTruthy();
 });
+
+test("lets map gestures pass through by disabling pointer events on the root", async () => {
+  const { toJSON } = await render(<RainLegend />);
+  expect(toJSON()?.props.pointerEvents).toBe("none");
+});

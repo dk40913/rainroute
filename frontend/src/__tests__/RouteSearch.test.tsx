@@ -1,4 +1,5 @@
 import React from "react";
+import { act } from "react";
 import { Keyboard } from "react-native";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import { RouteSearch } from "../components/RouteSearch";
@@ -79,6 +80,47 @@ test("editing a selected field again disables submit", async () => {
   await fireEvent.changeText(originInput, "台北車站2");
   await fireEvent.press(getByText("查詢路線"));
   expect(onSubmit).toHaveBeenCalledTimes(1);
+});
+
+test("a stale geocode response does not leave the field stuck on 搜尋中…", async () => {
+  let resolveFirst: (candidates: (typeof TAIPEI)[]) => void = () => {};
+  const pending = new Promise<(typeof TAIPEI)[]>((resolve) => {
+    resolveFirst = resolve;
+  });
+  mockedGeocode.mockReturnValueOnce(pending);
+  const { getByPlaceholderText, queryByText } = await render(<RouteSearch onSubmit={jest.fn()} />);
+  const input = getByPlaceholderText("出發地");
+
+  await fireEvent.changeText(input, "台北");
+  const endEditingPromise = fireEvent(input, "endEditing");
+  await waitFor(() => expect(queryByText("搜尋中…")).toBeTruthy());
+
+  await fireEvent.changeText(input, "台北車站2");
+  await act(async () => {
+    resolveFirst([TAIPEI]);
+    await endEditingPromise;
+  });
+
+  expect(queryByText("搜尋中…")).toBeNull();
+});
+
+test("editing back to the exact previously selected text still reopens the dropdown on blur", async () => {
+  mockedGeocode.mockResolvedValue([TAIPEI]);
+  const { getByPlaceholderText, getByText } = await render(<RouteSearch onSubmit={jest.fn()} />);
+  const input = getByPlaceholderText("出發地");
+
+  await fireEvent.changeText(input, "台北車站");
+  await fireEvent(input, "endEditing");
+  await waitFor(() => expect(getByText("台北車站")).toBeTruthy());
+  await fireEvent.press(getByText("台北車站"));
+  expect(mockedGeocode).toHaveBeenCalledTimes(1);
+
+  await fireEvent.changeText(input, "淡水");
+  await fireEvent.changeText(input, "台北車站");
+  await fireEvent(input, "endEditing");
+
+  await waitFor(() => expect(mockedGeocode).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(getByText("台北車站")).toBeTruthy());
 });
 
 test("dismisses the keyboard on submit once both fields are selected", async () => {
