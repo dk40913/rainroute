@@ -36,7 +36,7 @@ test("checkRain maps verdict and overlay", async () => {
   expect(out.overlay.imageUrl).toBe("/radar.png");
   expect((global as any).fetch).toHaveBeenCalledWith(
     "http://api/rain",
-    expect.objectContaining({ method: "POST" }),
+    expect.objectContaining({ method: "POST", body: JSON.stringify({ polyline: [[25.0, 121.0]] }) }),
   );
 });
 

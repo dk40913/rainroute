@@ -12,6 +12,9 @@ export function MainScreen() {
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(originText: string, destText: string) {
+    if (loading) return;
+    setRoute(null);
+    setRain(null);
     setLoading(true);
     try {
       const [o, d] = await Promise.all([geocode(originText), geocode(destText)]);
@@ -29,7 +32,7 @@ export function MainScreen() {
   return (
     <View style={styles.root}>
       <VerdictBanner result={rain} />
-      <RouteSearch onSubmit={onSubmit} />
+      <RouteSearch onSubmit={onSubmit} disabled={loading} />
       <View style={styles.map}>
         <RainMap route={route} rain={rain} />
         {loading && <ActivityIndicator style={StyleSheet.absoluteFill} size="large" />}
