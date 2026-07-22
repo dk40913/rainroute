@@ -1,4 +1,6 @@
+from io import BytesIO
 from fastapi import FastAPI
+from fastapi.responses import Response
 
 from app.config import get_settings
 from app.deps import get_radar_client
@@ -16,6 +18,14 @@ app = FastAPI(title="RainRoute API")
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/radar.png")
+async def radar_png() -> Response:
+    radar = await get_radar_client().fetch()
+    buf = BytesIO()
+    radar.image.save(buf, format="PNG")
+    return Response(content=buf.getvalue(), media_type="image/png")
 
 
 @app.post("/geocode")
@@ -36,7 +46,7 @@ async def rain_endpoint(req: RainRequest) -> RainResponse:
     verdict, max_level, wet = classify_route(req.polyline, radar, settings.sample_interval_m)
     geo = radar.geo
     overlay = Overlay(
-        image_url=radar.time,  # placeholder handle; App uses /rain to know overlay freshness
+        image_url="/radar.png",
         bbox=(geo.left_lon, geo.bottom_lat, geo.right_lon, geo.top_lat),
     )
     return RainResponse(

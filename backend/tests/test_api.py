@@ -41,4 +41,5 @@ def test_rain_endpoint_heavy():
     assert body["verdict"] == "raincoat_recommended"
     assert body["max_level"] == "heavy"
     assert body["overlay"]["bbox"] == [115.0, 17.75, 126.5, 29.25]
+    assert body["overlay"]["image_url"] == "/radar.png"
     assert body["radar_time"] == "2026-07-21T14:30:00+08:00"
