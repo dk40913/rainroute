@@ -10,8 +10,11 @@ from app.config import Settings
 from app.models import GeoBox
 from app.classify import RadarImage
 
-# UNVERIFIED against real CWA API (no key available at implementation time) — verify dataid + JSON field names before deploy.
-CWA_DATAID = "O-A0058-003"  # "no-topography" Taiwan radar composite — VERIFY.
+# Verified against the real CWA API on 2026-07-22.
+# O-A0058-003 = 雷達整合回波圖-臺灣(鄰近地區)_無地形 (no topography), 3600x3600,
+# lon 118.0-124.0 / lat 20.5-26.5. The metadata endpoint 302-redirects to S3,
+# so the HTTP client must follow redirects.
+CWA_DATAID = "O-A0058-003"
 
 
 class RadarClient:
@@ -27,21 +30,19 @@ class RadarClient:
 
     def _issue_time(self, meta: dict) -> str:
         ds = meta["cwaopendata"]["dataset"]
-        return ds["datasetInfo"]["issueTime"]
+        return ds["DateTime"]
 
     def _parse_geo(self, meta: dict) -> GeoBox:
-        g = meta["cwaopendata"]["dataset"]["GeoInfo"]
-        return GeoBox(
-            left_lon=float(g["LeftLongitude"]),
-            right_lon=float(g["RightLongitude"]),
-            top_lat=float(g["TopLatitude"]),
-            bottom_lat=float(g["BottomLatitude"]),
-        )
+        # Real shape: parameterSet.LongitudeRange "118.0-124.0", LatitudeRange "20.5-26.5"
+        ps = meta["cwaopendata"]["dataset"]["datasetInfo"]["parameterSet"]
+        left, right = (float(v) for v in ps["LongitudeRange"].split("-"))
+        bottom, top = (float(v) for v in ps["LatitudeRange"].split("-"))
+        return GeoBox(left_lon=left, right_lon=right, top_lat=top, bottom_lat=bottom)
 
     async def fetch(self) -> RadarImage:
         if self._cache is not None and (self._now() - self._fetched_at) < self._settings.radar_cache_ttl_s:
             return self._cache
-        async with httpx.AsyncClient(timeout=30) as http:
+        async with httpx.AsyncClient(timeout=30, follow_redirects=True) as http:
             meta_resp = await http.get(
                 f"{self._settings.cwa_base_url}/fileapi/v1/opendataapi/{CWA_DATAID}",
                 params={"Authorization": self._settings.cwa_api_key, "format": "JSON"},

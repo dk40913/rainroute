@@ -1,18 +1,29 @@
 from app.models import RainLevel
 
-# Approximate CWA / QPESUMS radar reflectivity (dBZ) echo colours mapped to a
-# coarse rain level. These are STARTING values — the implementer MUST calibrate
-# against a real O-A0058 image (sample known pixels, compare to the legend) and
-# adjust. Tests use this table as the source of truth, so they stay valid after
-# recalibration as long as the structure is kept.
+# Calibrated 2026-07-22 against a real O-A0058-003 image. The real product uses
+# a CONTINUOUS colour ramp (cyan→blue→green→yellow→orange→red→magenta as dBZ
+# rises), so each band gets several anchors; nearest-match within max_dist then
+# covers the interpolated colours between them. Background is white/grey (RGB,
+# no alpha) and map linework is dark slate blue (55, 74, 135) — all of those sit
+# farther than max_dist from every anchor and correctly resolve to NONE.
 PALETTE: list[tuple[tuple[int, int, int], RainLevel]] = [
-    ((0, 236, 236), RainLevel.LIGHT),      # ~15 dBZ cyan
-    ((0, 160, 255), RainLevel.LIGHT),      # ~20 dBZ blue
-    ((0, 255, 0), RainLevel.MODERATE),     # ~30 dBZ green
-    ((255, 255, 0), RainLevel.MODERATE),   # ~35 dBZ yellow
-    ((255, 144, 0), RainLevel.HEAVY),      # ~45 dBZ orange
-    ((255, 0, 0), RainLevel.HEAVY),        # ~50 dBZ red
-    ((214, 0, 214), RainLevel.HEAVY),      # ~60 dBZ magenta
+    ((0, 218, 255), RainLevel.LIGHT),      # cyan end of blue band (low dBZ)
+    ((0, 160, 255), RainLevel.LIGHT),
+    ((0, 91, 255), RainLevel.LIGHT),
+    ((0, 0, 255), RainLevel.LIGHT),        # deep blue end of blue band
+    ((0, 150, 0), RainLevel.MODERATE),     # green band (real rain)
+    ((0, 200, 0), RainLevel.MODERATE),
+    ((0, 255, 0), RainLevel.MODERATE),
+    ((102, 192, 0), RainLevel.MODERATE),   # yellow-green transition
+    ((204, 234, 0), RainLevel.MODERATE),
+    ((255, 255, 0), RainLevel.MODERATE),   # yellow
+    ((255, 222, 0), RainLevel.MODERATE),
+    ((255, 152, 0), RainLevel.HEAVY),      # orange band
+    ((255, 96, 0), RainLevel.HEAVY),
+    ((255, 0, 0), RainLevel.HEAVY),        # red band
+    ((200, 0, 0), RainLevel.HEAVY),
+    ((255, 0, 255), RainLevel.HEAVY),      # magenta (extreme)
+    ((214, 0, 214), RainLevel.HEAVY),
 ]
 
 

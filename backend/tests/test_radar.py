@@ -13,17 +13,27 @@ def _png_bytes(color):
     return buf.getvalue()
 
 
-# Fixture shaped like the recorded CWA response. Adjust field names to match
-# the real API when you verify it, and keep _parse_geo/_image_url in sync.
+# Fixture matching the REAL O-A0058-003 response recorded on 2026-07-22
+# (irrelevant fields trimmed). Keep _parse_geo/_image_url/_issue_time in sync.
 META = {
     "cwaopendata": {
+        "dataid": "O-A0058-003",
         "dataset": {
-            "datasetInfo": {"datasetDescription": "雷達整合回波圖-臺灣",
-                             "issueTime": "2026-07-21T14:30:00+08:00"},
-            "resource": {"ProductURL": "https://cwa.example/radar.png"},
-            "GeoInfo": {"LeftLongitude": "115.00", "RightLongitude": "126.50",
-                        "TopLatitude": "29.25", "BottomLatitude": "17.75"},
-        }
+            "datasetInfo": {
+                "datasetDescription": "資料說明",
+                "parameterSet": {
+                    "LongitudeRange": "118.0-124.0",
+                    "LatitudeRange": "20.5-26.5",
+                    "ImageDimension": "3600x3600",
+                },
+            },
+            "resource": {
+                "resourceDesc": "雷達整合回波圖-臺灣(鄰近地區)_無地形",
+                "mimeType": "image/png",
+                "ProductURL": "https://cwa.example/radar.png",
+            },
+            "DateTime": "2026-07-21T14:30:00+08:00",
+        },
     }
 }
 
@@ -47,7 +57,8 @@ def test_fetch_builds_radar_image():
     client = RadarClient(Settings(cwa_api_key="k"))
     import asyncio
     radar = asyncio.run(client.fetch())
-    assert radar.geo.left_lon == 115.0 and radar.geo.bottom_lat == 17.75
+    assert radar.geo.left_lon == 118.0 and radar.geo.right_lon == 124.0
+    assert radar.geo.top_lat == 26.5 and radar.geo.bottom_lat == 20.5
     assert radar.time == "2026-07-21T14:30:00+08:00"
     assert radar.image.getpixel((0, 0))[:3] == (255, 0, 0)
     assert radar.png_bytes == raw
