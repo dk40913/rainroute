@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, ActivityIndicator, Alert, StyleSheet } from "react-native";
 import { RouteSearch } from "./components/RouteSearch";
 import { RainMap } from "./components/RainMap";
+import { RainLegend } from "./components/RainLegend";
 import { VerdictBanner } from "./components/VerdictBanner";
 import { geocode, planRoute, checkRain } from "./api";
 import { RouteResult, RainResult } from "./types";
@@ -35,6 +36,7 @@ export function MainScreen() {
       <RouteSearch onSubmit={onSubmit} disabled={loading} />
       <View style={styles.map}>
         <RainMap route={route} rain={rain} />
+        <RainLegend />
         {loading && <ActivityIndicator style={StyleSheet.absoluteFill} size="large" />}
       </View>
     </View>

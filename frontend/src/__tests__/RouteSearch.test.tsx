@@ -1,4 +1,5 @@
 import React from "react";
+import { Keyboard } from "react-native";
 import { render, fireEvent } from "@testing-library/react-native";
 import { RouteSearch } from "../components/RouteSearch";
 
@@ -9,4 +10,13 @@ test("submits both fields", async () => {
   await fireEvent.changeText(getByPlaceholderText("目的地"), "淡水");
   await fireEvent.press(getByText("查詢路線"));
   expect(onSubmit).toHaveBeenCalledWith("台北車站", "淡水");
+});
+
+test("dismisses the keyboard on submit", async () => {
+  const dismissSpy = jest.spyOn(Keyboard, "dismiss");
+  const onSubmit = jest.fn();
+  const { getByText } = await render(<RouteSearch onSubmit={onSubmit} />);
+  await fireEvent.press(getByText("查詢路線"));
+  expect(dismissSpy).toHaveBeenCalled();
+  dismissSpy.mockRestore();
 });

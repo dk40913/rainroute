@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, TextInput, Button, StyleSheet } from "react-native";
+import { View, TextInput, Button, StyleSheet, Keyboard } from "react-native";
 
 export function RouteSearch({
   onSubmit,
@@ -12,9 +12,28 @@ export function RouteSearch({
   const [destination, setDestination] = useState("");
   return (
     <View style={styles.box}>
-      <TextInput style={styles.input} placeholder="出發地" value={origin} onChangeText={setOrigin} />
-      <TextInput style={styles.input} placeholder="目的地" value={destination} onChangeText={setDestination} />
-      <Button title="查詢路線" onPress={() => onSubmit(origin, destination)} disabled={disabled} />
+      <TextInput
+        style={styles.input}
+        placeholder="出發地"
+        value={origin}
+        onChangeText={setOrigin}
+        returnKeyType="done"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="目的地"
+        value={destination}
+        onChangeText={setDestination}
+        returnKeyType="done"
+      />
+      <Button
+        title="查詢路線"
+        onPress={() => {
+          Keyboard.dismiss();
+          onSubmit(origin, destination);
+        }}
+        disabled={disabled}
+      />
     </View>
   );
 }
