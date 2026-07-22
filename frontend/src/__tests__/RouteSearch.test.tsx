@@ -11,6 +11,11 @@ const mockedGeocode = geocode as jest.Mock;
 
 const TAIPEI = { name: "台北車站", lat: 25.04, lng: 121.51 };
 const TAMSUI = { name: "淡水", lat: 25.17, lng: 121.44 };
+const TAIPEI_FULL = {
+  name: "捷運台北車站, 100, 中正區, 台北市, 台灣",
+  lat: 25.04,
+  lng: 121.51,
+};
 
 beforeEach(() => {
   mockedGeocode.mockReset();
@@ -121,6 +126,22 @@ test("editing back to the exact previously selected text still reopens the dropd
 
   await waitFor(() => expect(mockedGeocode).toHaveBeenCalledTimes(2));
   await waitFor(() => expect(getByText("台北車站")).toBeTruthy());
+});
+
+test("comma-separated candidate names render a two-line row and fill the field with the primary name only", async () => {
+  mockedGeocode.mockResolvedValue([TAIPEI_FULL]);
+  const { getByPlaceholderText, getByText, getByDisplayValue } = await render(
+    <RouteSearch onSubmit={jest.fn()} />,
+  );
+  const input = getByPlaceholderText("出發地");
+
+  await fireEvent.changeText(input, "台北車站");
+  await fireEvent(input, "endEditing");
+  await waitFor(() => expect(getByText("捷運台北車站")).toBeTruthy());
+  expect(getByText("中正區 · 台北市 · 台灣")).toBeTruthy();
+
+  await fireEvent.press(getByText("捷運台北車站"));
+  expect(getByDisplayValue("捷運台北車站")).toBeTruthy();
 });
 
 test("dismisses the keyboard on submit once both fields are selected", async () => {
