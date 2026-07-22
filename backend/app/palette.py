@@ -1,3 +1,5 @@
+from PIL import Image, ImageChops
+
 from app.models import RainLevel
 
 # Calibrated 2026-07-22 against a real O-A0058-003 image. The real product uses
@@ -29,6 +31,30 @@ PALETTE: list[tuple[tuple[int, int, int], RainLevel]] = [
 
 def _dist2(a, b):
     return sum((x - y) ** 2 for x, y in zip(a, b))
+
+
+def strip_non_echo(image: Image.Image) -> Image.Image:
+    """Make every pixel that isn't a radar echo colour fully transparent.
+
+    The CWA radar PNG bakes in cartography: white/grey background, black/grey
+    coastlines, and dark slate-blue (55, 74, 135) river/boundary linework.
+    Echo colours (see PALETTE) are saturated (max-min channel spread >= 30)
+    and bright in at least one channel (>= 150); the map linework has enough
+    saturation (sat=80) but isn't bright enough (max=135), so it's dropped
+    along with the background and line art. Uses only PIL C-speed channel
+    ops (no per-pixel Python loops) since the image is 3600x3600 = 13M px.
+    """
+    rgb = image.convert("RGB")
+    r, g, b = rgb.split()
+    mx = ImageChops.lighter(ImageChops.lighter(r, g), b)
+    mn = ImageChops.darker(ImageChops.darker(r, g), b)
+    sat = ImageChops.subtract(mx, mn)
+    sat_mask = sat.point(lambda v: 255 if v >= 30 else 0)
+    mx_mask = mx.point(lambda v: 255 if v >= 150 else 0)
+    alpha = ImageChops.darker(sat_mask, mx_mask)  # logical AND
+    out = rgb.convert("RGBA")
+    out.putalpha(alpha)
+    return out
 
 
 def pixel_to_level(pixel, palette=PALETTE, max_dist=100.0):

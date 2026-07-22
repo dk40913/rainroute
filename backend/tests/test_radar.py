@@ -45,9 +45,18 @@ def _clock():
     return t, now
 
 
+def _mixed_png_bytes():
+    # 10x10 white background with one red echo pixel at (0, 0).
+    buf = BytesIO()
+    img = Image.new("RGBA", (10, 10), (255, 255, 255, 255))
+    img.putpixel((0, 0), (255, 0, 0, 255))
+    img.save(buf, format="PNG")
+    return buf.getvalue()
+
+
 @respx.mock
 def test_fetch_builds_radar_image():
-    raw = _png_bytes((255, 0, 0, 255))
+    raw = _mixed_png_bytes()
     respx.get("https://opendata.cwa.gov.tw/fileapi/v1/opendataapi/O-A0058-003").mock(
         return_value=httpx.Response(200, json=META)
     )
@@ -60,8 +69,13 @@ def test_fetch_builds_radar_image():
     assert radar.geo.left_lon == 118.0 and radar.geo.right_lon == 124.0
     assert radar.geo.top_lat == 26.5 and radar.geo.bottom_lat == 20.5
     assert radar.time == "2026-07-21T14:30:00+08:00"
-    assert radar.image.getpixel((0, 0))[:3] == (255, 0, 0)
-    assert radar.png_bytes == raw
+    assert radar.image.getpixel((0, 0)) == (255, 0, 0, 255)  # red echo survives
+    assert radar.image.getpixel((1, 1))[3] == 0  # white background is transparent
+
+    assert radar.png_bytes.startswith(b"\x89PNG\r\n\x1a\n")
+    decoded = Image.open(BytesIO(radar.png_bytes)).convert("RGBA")
+    assert decoded.getpixel((0, 0)) == (255, 0, 0, 255)
+    assert decoded.getpixel((1, 1))[3] == 0
 
 
 @respx.mock

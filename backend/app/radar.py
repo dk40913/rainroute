@@ -9,6 +9,7 @@ from PIL import Image
 from app.config import Settings
 from app.models import GeoBox
 from app.classify import RadarImage
+from app.palette import strip_non_echo
 
 # Verified against the real CWA API on 2026-07-22.
 # O-A0058-003 = 雷達整合回波圖-臺灣(鄰近地區)_無地形 (no topography), 3600x3600,
@@ -51,8 +52,14 @@ class RadarClient:
             meta = meta_resp.json()
             img_resp = await http.get(self._image_url(meta))
             img_resp.raise_for_status()
-        png_bytes = img_resp.content
-        image = await asyncio.to_thread(lambda: Image.open(BytesIO(png_bytes)).convert("RGBA"))
+        def _decode_strip_encode():
+            raw_image = Image.open(BytesIO(img_resp.content)).convert("RGBA")
+            stripped = strip_non_echo(raw_image)
+            buf = BytesIO()
+            stripped.save(buf, format="PNG")
+            return stripped, buf.getvalue()
+
+        image, png_bytes = await asyncio.to_thread(_decode_strip_encode)
         radar = RadarImage(image=image, geo=self._parse_geo(meta), time=self._issue_time(meta), png_bytes=png_bytes)
         self._cache = radar
         self._fetched_at = self._now()
