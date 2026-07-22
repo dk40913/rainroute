@@ -13,6 +13,18 @@ export function RainMap({ route, rain }: { route: RouteResult | null; rain: Rain
     properties: {},
   };
 
+  // route.polyline is [lat, lng] pairs -> bounds as [west, south, east, north]
+  const routeBounds = route && (() => {
+    const lats = route.polyline.map(([lat]) => lat);
+    const lngs = route.polyline.map(([, lng]) => lng);
+    return [Math.min(...lngs), Math.min(...lats), Math.max(...lngs), Math.max(...lats)] as [
+      number,
+      number,
+      number,
+      number,
+    ];
+  })();
+
   // bbox = [west, south, east, north] -> 4 corners clockwise from top-left
   const corners = rain && (() => {
     const [w, s, e, n] = rain.overlay.bbox;
@@ -21,7 +33,11 @@ export function RainMap({ route, rain }: { route: RouteResult | null; rain: Rain
 
   return (
     <Map style={{ flex: 1 }} mapStyle={STYLE_URL}>
-      <Camera initialViewState={{ center: [121.0, 23.7], zoom: 6.5 }} />
+      {routeBounds ? (
+        <Camera bounds={routeBounds} padding={{ top: 50, right: 50, bottom: 50, left: 50 }} />
+      ) : (
+        <Camera initialViewState={{ center: [121.0, 23.7], zoom: 6.5 }} />
+      )}
 
       {corners && (
         <ImageSource id="radar" coordinates={corners} url={resolveUrl(rain!.overlay.imageUrl)}>
