@@ -1,5 +1,13 @@
 import { BACKEND_BASE_URL } from "./config";
-import { GeocodeCandidate, LatLng, RouteResult, RainResult } from "./types";
+import { GeocodeCandidate, LatLng, RouteResult, RainResult, WetSegment } from "./types";
+
+type RainWire = {
+  verdict: "raincoat_recommended" | "no_raincoat_needed";
+  max_level: string;
+  wet_segments: WetSegment[];
+  radar_time: string;
+  overlay: { image_url: string; bbox: [number, number, number, number] };
+};
 
 async function post<T>(path: string, body: unknown): Promise<T> {
   const resp = await fetch(`${BACKEND_BASE_URL}${path}`, {
@@ -23,7 +31,7 @@ export async function planRoute(origin: LatLng, destination: LatLng): Promise<Ro
 }
 
 export async function checkRain(polyline: [number, number][]): Promise<RainResult> {
-  const d = await post<any>("/rain", { polyline });
+  const d = await post<RainWire>("/rain", { polyline });
   return {
     verdict: d.verdict, maxLevel: d.max_level,
     wetSegments: d.wet_segments, radarTime: d.radar_time,
