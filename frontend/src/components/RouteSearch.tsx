@@ -3,6 +3,20 @@ import { View, Text, TextInput, Pressable, Button, StyleSheet, Keyboard } from "
 import { geocode } from "../api";
 import { GeocodeCandidate } from "../types";
 
+function primaryName(name: string): string {
+  return name.split(",")[0].trim();
+}
+
+function secondaryName(name: string): string {
+  return name
+    .split(",")
+    .slice(1)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0 && !/^\d+$/.test(s))
+    .slice(0, 3)
+    .join(" · ");
+}
+
 type FieldState = {
   text: string;
   candidates: GeocodeCandidate[];
@@ -55,13 +69,14 @@ function GeocodeField({
   }
 
   function handleSelect(candidate: GeocodeCandidate) {
+    const primary = primaryName(candidate.name);
     onChange({
-      text: candidate.name,
+      text: primary,
       candidates: [],
       selected: candidate,
       loading: false,
       searched: false,
-      lastQueried: candidate.name,
+      lastQueried: primary,
     });
   }
 
@@ -81,11 +96,19 @@ function GeocodeField({
       )}
       {!value.loading && value.candidates.length > 0 && (
         <View style={styles.dropdown}>
-          {value.candidates.slice(0, 5).map((candidate, i) => (
-            <Pressable key={`${candidate.name}-${i}`} style={styles.option} onPress={() => handleSelect(candidate)}>
-              <Text>{candidate.name}</Text>
-            </Pressable>
-          ))}
+          {value.candidates.slice(0, 5).map((candidate, i) => {
+            const secondary = secondaryName(candidate.name);
+            return (
+              <Pressable key={`${candidate.name}-${i}`} style={styles.option} onPress={() => handleSelect(candidate)}>
+                <Text style={styles.optionPrimary}>{primaryName(candidate.name)}</Text>
+                {secondary.length > 0 && (
+                  <Text style={styles.optionSecondary} numberOfLines={1}>
+                    {secondary}
+                  </Text>
+                )}
+              </Pressable>
+            );
+          })}
         </View>
       )}
     </View>
@@ -128,4 +151,6 @@ const styles = StyleSheet.create({
   hint: { fontSize: 12, color: "#666", paddingHorizontal: 4 },
   dropdown: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, backgroundColor: "#fff" },
   option: { padding: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#eee" },
+  optionPrimary: { fontSize: 14, fontWeight: "600", color: "#222" },
+  optionSecondary: { fontSize: 11, color: "#888" },
 });
