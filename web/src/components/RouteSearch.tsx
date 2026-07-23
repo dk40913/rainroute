@@ -122,8 +122,12 @@ function GeocodeField({
         <div className="rr-hint">找不到地點</div>
       )}
       {!value.loading && value.selected && (
-        <div className="rr-selected-hint" title={value.selected.name}>
-          ✓ {value.selected.name}
+        <div
+          className={value.selected.approximate ? "rr-selected-hint rr-approx" : "rr-selected-hint"}
+          title={value.selected.name}
+        >
+          {value.selected.approximate ? "≈ 約在附近：" : "✓ "}
+          {value.selected.name}
         </div>
       )}
       {!value.loading && value.candidates.length > 0 && (

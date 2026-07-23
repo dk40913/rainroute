@@ -33,6 +33,9 @@ class GeocodeCandidate(BaseModel):
     name: str
     lat: float
     lng: float
+    # True when the query only resolved via progressive address fallback
+    # (e.g. lane/house number stripped) — the location is approximate.
+    approximate: bool = False
 
 
 class RouteRequest(BaseModel):

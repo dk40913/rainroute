@@ -100,8 +100,12 @@ function GeocodeField({
         <Text style={styles.hint}>找不到地點</Text>
       )}
       {!value.loading && value.selected && (
-        <Text style={styles.selectedHint} numberOfLines={1}>
-          ✓ {value.selected.name}
+        <Text
+          style={value.selected.approximate ? styles.approxHint : styles.selectedHint}
+          numberOfLines={1}
+        >
+          {value.selected.approximate ? "≈ 約在附近：" : "✓ "}
+          {value.selected.name}
         </Text>
       )}
       {!value.loading && value.candidates.length > 0 && (
@@ -162,6 +166,7 @@ const styles = StyleSheet.create({
   input: { flex: 1, padding: 10 },
   hint: { fontSize: 12, color: "#666", paddingHorizontal: 4 },
   selectedHint: { fontSize: 12, color: "#2e9e5b", paddingHorizontal: 4 },
+  approxHint: { fontSize: 12, color: "#b7791f", paddingHorizontal: 4 },
   dropdown: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, backgroundColor: "#fff" },
   option: { padding: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#eee" },
   optionPrimary: { fontSize: 14, fontWeight: "600", color: "#222" },

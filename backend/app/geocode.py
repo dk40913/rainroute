@@ -74,9 +74,11 @@ async def _search(http: httpx.AsyncClient, settings: Settings, query: str) -> li
     return resp.json()
 
 
-def _to_candidates(rows: list[dict]) -> list[GeocodeCandidate]:
+def _to_candidates(rows: list[dict], approximate: bool = False) -> list[GeocodeCandidate]:
     candidates = [
-        GeocodeCandidate(name=r["display_name"], lat=float(r["lat"]), lng=float(r["lon"]))
+        GeocodeCandidate(
+            name=r["display_name"], lat=float(r["lat"]), lng=float(r["lon"]), approximate=approximate
+        )
         for r in rows
     ]
 
@@ -108,7 +110,7 @@ async def geocode(query: str, settings: Settings) -> list[GeocodeCandidate]:
         if not candidates:
             for fallback_query in address_fallbacks(query):
                 await asyncio.sleep(1)
-                candidates = _to_candidates(await _search(http, settings, fallback_query))
+                candidates = _to_candidates(await _search(http, settings, fallback_query), approximate=True)
                 if candidates:
                     break
 
