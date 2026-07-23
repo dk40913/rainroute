@@ -46,9 +46,12 @@ function GeocodeField({
   value: FieldState;
   onChange: React.Dispatch<React.SetStateAction<FieldState>>;
 }) {
-  async function handleBlur() {
-    const text = value.text.trim();
+  async function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
+    // Read the DOM value directly — with an uncontrolled input it is the
+    // single source of truth (state may lag by one IME commit at blur time).
+    const text = e.target.value.trim();
     if (!text || text === value.lastQueried) return;
+    if (text !== value.text) onChange((prev) => ({ ...prev, text }));
     onChange((prev) => ({ ...prev, loading: true, searched: false }));
     try {
       const candidates = await geocode(text);
@@ -70,15 +73,17 @@ function GeocodeField({
     onChange((prev) => ({ ...prev, text, candidates: [], selected: null, searched: false, lastQueried: null }));
   }
 
-  // While an IME composition is in progress (e.g. Chinese Zhuyin/Pinyin),
-  // leave the input's DOM value under the browser's control: forcing React's
-  // controlled `value` back onto the element mid-composition confuses the
-  // IME and causes the committed text to be duplicated. Only sync the final
-  // text into state once composition ends.
-  const isComposingRef = useRef(false);
+  // The input is deliberately UNCONTROLLED: with a controlled value, React
+  // re-asserts state onto the DOM after every input event, which fights IME
+  // (Zhuyin/Pinyin) composition — causing either duplicated text (state
+  // written mid-composition) or an un-typeable field (state withheld, React
+  // clobbers the buffer). Leaving the DOM value to the browser sidesteps the
+  // whole class of bugs; we only write to the DOM when a candidate is picked.
+  const inputRef = useRef<HTMLInputElement>(null);
 
   function handleSelect(candidate: GeocodeCandidate) {
     const primary = primaryName(candidate.name);
+    if (inputRef.current) inputRef.current.value = primary;
     onChange({
       text: primary,
       candidates: [],
@@ -100,20 +105,11 @@ function GeocodeField({
       <div className="rr-input-row">
         <span className="rr-input-icon">{icon}</span>
         <input
+          ref={inputRef}
           className="rr-input"
           placeholder={placeholder}
-          value={value.text}
-          onChange={(e) => {
-            if (isComposingRef.current) return;
-            handleChangeText(e.target.value);
-          }}
-          onCompositionStart={() => {
-            isComposingRef.current = true;
-          }}
-          onCompositionEnd={(e) => {
-            isComposingRef.current = false;
-            handleChangeText(e.currentTarget.value);
-          }}
+          defaultValue=""
+          onChange={(e) => handleChangeText(e.target.value)}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
         />
