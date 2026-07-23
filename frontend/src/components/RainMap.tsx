@@ -31,6 +31,19 @@ export function RainMap({ route, rain }: { route: RouteResult | null; rain: Rain
     return [[w, n], [e, n], [e, s], [w, s]] as [[number, number], [number, number], [number, number], [number, number]];
   })();
 
+  // Origin/destination pins at the route endpoints (green start, red end).
+  const endpointsGeoJSON = route && {
+    type: "FeatureCollection" as const,
+    features: [
+      { kind: "origin", point: route.polyline[0] },
+      { kind: "destination", point: route.polyline[route.polyline.length - 1] },
+    ].map(({ kind, point: [lat, lng] }) => ({
+      type: "Feature" as const,
+      geometry: { type: "Point" as const, coordinates: [lng, lat] },
+      properties: { kind },
+    })),
+  };
+
   return (
     <Map style={{ flex: 1 }} mapStyle={STYLE_URL}>
       {routeBounds ? (
@@ -48,6 +61,21 @@ export function RainMap({ route, rain }: { route: RouteResult | null; rain: Rain
       {lineGeoJSON && (
         <GeoJSONSource id="route" data={lineGeoJSON}>
           <Layer type="line" id="route-line" paint={{ "line-color": "#1565c0", "line-width": 4 }} />
+        </GeoJSONSource>
+      )}
+
+      {endpointsGeoJSON && (
+        <GeoJSONSource id="route-endpoints" data={endpointsGeoJSON}>
+          <Layer
+            type="circle"
+            id="route-endpoint-dots"
+            paint={{
+              "circle-radius": 8,
+              "circle-color": ["match", ["get", "kind"], "origin", "#2e9e5b", "#d64545"],
+              "circle-stroke-width": 2.5,
+              "circle-stroke-color": "#ffffff",
+            }}
+          />
         </GeoJSONSource>
       )}
     </Map>
