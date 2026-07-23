@@ -1,5 +1,6 @@
 import httpx
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 
 from app.config import get_settings
@@ -13,6 +14,16 @@ from app.routing import plan_route, RouteNotFoundError
 from app.classify import classify_route
 
 app = FastAPI(title="RainRoute API")
+
+# Configure CORS
+settings = get_settings()
+allow_origins = ["*"] if settings.cors_origins == "*" else [o.strip() for o in settings.cors_origins.split(",")]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allow_origins,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.exception_handler(httpx.HTTPError)

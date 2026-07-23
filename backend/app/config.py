@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     cwa_base_url: str = "https://opendata.cwa.gov.tw"
     radar_cache_ttl_s: int = 600
     sample_interval_m: float = 500.0
+    cors_origins: str = "*"
 
 
 @lru_cache

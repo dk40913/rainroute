@@ -63,3 +63,11 @@ def test_rain_endpoint_heavy():
     assert body["overlay"]["bbox"] == [115.0, 17.75, 126.5, 29.25]
     assert body["overlay"]["image_url"] == "/radar.png"
     assert body["radar_time"] == "2026-07-21T14:30:00+08:00"
+
+
+def test_cors_headers():
+    """Test that CORS headers are present in response."""
+    resp = client.get("/health", headers={"origin": "http://example.com"})
+    assert resp.status_code == 200
+    assert "access-control-allow-origin" in resp.headers
+    assert resp.headers["access-control-allow-origin"] == "*"
