@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { MapLibreMap, type GeoJSONSource, type ImageSource } from "maplibre-gl";
+import { MapLibreMap, Marker, type GeoJSONSource, type ImageSource } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { RouteResult, RainResult } from "../types";
 import { resolveUrl } from "../api";
@@ -20,6 +20,8 @@ const RADAR_LAYER_ID = "radar-layer";
 export function RainMap({ route, rain }: { route: RouteResult | null; rain: RainResult | null }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
+  const originMarkerRef = useRef<Marker | null>(null);
+  const destMarkerRef = useRef<Marker | null>(null);
   const [ready, setReady] = useState(false);
 
   // Initialize the map once.
@@ -58,6 +60,10 @@ export function RainMap({ route, rain }: { route: RouteResult | null; rain: Rain
     if (!route) {
       if (map.getLayer(ROUTE_LAYER_ID)) map.removeLayer(ROUTE_LAYER_ID);
       if (map.getSource(ROUTE_SOURCE_ID)) map.removeSource(ROUTE_SOURCE_ID);
+      originMarkerRef.current?.remove();
+      destMarkerRef.current?.remove();
+      originMarkerRef.current = null;
+      destMarkerRef.current = null;
       return;
     }
 
@@ -78,6 +84,20 @@ export function RainMap({ route, rain }: { route: RouteResult | null; rain: Rain
         source: ROUTE_SOURCE_ID,
         paint: { "line-color": "#1565c0", "line-width": 4 },
       });
+    }
+
+    // Origin (green) and destination (red) pins at the route endpoints.
+    const [oLat, oLng] = route.polyline[0];
+    const [dLat, dLng] = route.polyline[route.polyline.length - 1];
+    if (!originMarkerRef.current) {
+      originMarkerRef.current = new Marker({ color: "#2e9e5b" }).setLngLat([oLng, oLat]).addTo(map);
+    } else {
+      originMarkerRef.current.setLngLat([oLng, oLat]);
+    }
+    if (!destMarkerRef.current) {
+      destMarkerRef.current = new Marker({ color: "#d64545" }).setLngLat([dLng, dLat]).addTo(map);
+    } else {
+      destMarkerRef.current.setLngLat([dLng, dLat]);
     }
 
     // route.polyline is [lat, lng] pairs -> bounds as [west, south, east, north]
