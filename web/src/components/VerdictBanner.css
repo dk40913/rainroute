@@ -1,0 +1,16 @@
+.rr-banner {
+  padding: 16px;
+  text-align: center;
+}
+
+.rr-banner-text {
+  color: white;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.rr-banner-sub {
+  color: white;
+  font-size: 13px;
+  margin-top: 4px;
+}
