@@ -1,0 +1,39 @@
+.rr-legend {
+  position: absolute;
+  bottom: 24px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  padding: 8px;
+  width: 160px;
+  pointer-events: none;
+}
+
+.rr-legend-strip {
+  display: flex;
+  height: 9px;
+}
+
+.rr-legend-block {
+  flex: 1;
+}
+
+.rr-legend-labels {
+  display: flex;
+  margin-top: 4px;
+}
+
+.rr-legend-label {
+  font-size: 12px;
+  color: #222;
+  text-align: center;
+}
+
+@media (prefers-color-scheme: dark) {
+  .rr-legend {
+    background: rgba(30, 30, 30, 0.9);
+  }
+  .rr-legend-label {
+    color: #eee;
+  }
+}

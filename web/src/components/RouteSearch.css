@@ -1,0 +1,118 @@
+.rr-box {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rr-field {
+  position: relative;
+}
+
+.rr-input-row {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.rr-input-icon {
+  font-size: 16px;
+  padding-left: 10px;
+}
+
+.rr-input {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  min-width: 0;
+  color: #222;
+}
+
+.rr-hint {
+  font-size: 12px;
+  color: #666;
+  padding: 2px 4px;
+}
+
+.rr-dropdown {
+  position: absolute;
+  z-index: 10;
+  left: 0;
+  right: 0;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.rr-option {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.rr-option:last-child {
+  border-bottom: none;
+}
+
+.rr-option:hover {
+  background: #f5f5f5;
+}
+
+.rr-option-primary {
+  font-size: 14px;
+  font-weight: 600;
+  color: #222;
+}
+
+.rr-option-secondary {
+  font-size: 11px;
+  color: #888;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rr-submit {
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: #1565c0;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rr-submit:disabled {
+  background: #9db8d8;
+  cursor: not-allowed;
+}
+
+@media (prefers-color-scheme: dark) {
+  .rr-input-row,
+  .rr-dropdown {
+    background: #1e1e1e;
+    border-color: #444;
+  }
+  .rr-input {
+    color: #eee;
+  }
+  .rr-option {
+    border-bottom-color: #333;
+  }
+  .rr-option:hover {
+    background: #2a2a2a;
+  }
+  .rr-option-primary {
+    color: #eee;
+  }
+  .rr-hint {
+    color: #aaa;
+  }
+}

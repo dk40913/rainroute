@@ -1,0 +1,43 @@
+.rr-root {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  width: 100%;
+}
+
+.rr-error {
+  margin: 0 12px 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fdecea;
+  color: #a33;
+  font-size: 13px;
+}
+
+.rr-map-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.rr-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.5);
+  font-size: 15px;
+  color: #222;
+}
+
+@media (prefers-color-scheme: dark) {
+  .rr-error {
+    background: #3a1f1f;
+    color: #ff8a80;
+  }
+  .rr-loading {
+    background: rgba(20, 20, 20, 0.5);
+    color: #eee;
+  }
+}
