@@ -36,10 +36,12 @@ const initialField: FieldState = {
 };
 
 function GeocodeField({
+  icon,
   placeholder,
   value,
   onChange,
 }: {
+  icon: string;
   placeholder: string;
   value: FieldState;
   onChange: React.Dispatch<React.SetStateAction<FieldState>>;
@@ -82,14 +84,17 @@ function GeocodeField({
 
   return (
     <View>
-      <TextInput
-        style={styles.input}
-        placeholder={placeholder}
-        value={value.text}
-        onChangeText={handleChangeText}
-        onEndEditing={handleEndEditing}
-        returnKeyType="done"
-      />
+      <View style={styles.inputRow}>
+        <Text style={styles.inputIcon}>{icon}</Text>
+        <TextInput
+          style={styles.input}
+          placeholder={placeholder}
+          value={value.text}
+          onChangeText={handleChangeText}
+          onEndEditing={handleEndEditing}
+          returnKeyType="done"
+        />
+      </View>
       {value.loading && <Text style={styles.hint}>搜尋中…</Text>}
       {!value.loading && value.searched && value.candidates.length === 0 && (
         <Text style={styles.hint}>找不到地點</Text>
@@ -129,8 +134,8 @@ export function RouteSearch({
 
   return (
     <View style={styles.box}>
-      <GeocodeField placeholder="出發地" value={origin} onChange={setOrigin} />
-      <GeocodeField placeholder="目的地" value={destination} onChange={setDestination} />
+      <GeocodeField icon="🛵" placeholder="出發地" value={origin} onChange={setOrigin} />
+      <GeocodeField icon="📍" placeholder="目的地" value={destination} onChange={setDestination} />
       <Button
         title="查詢路線"
         onPress={() => {
@@ -147,7 +152,9 @@ export function RouteSearch({
 
 const styles = StyleSheet.create({
   box: { padding: 12, gap: 8 },
-  input: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 10 },
+  inputRow: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: "#ccc", borderRadius: 8 },
+  inputIcon: { fontSize: 16, paddingLeft: 10 },
+  input: { flex: 1, padding: 10 },
   hint: { fontSize: 12, color: "#666", paddingHorizontal: 4 },
   dropdown: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, backgroundColor: "#fff" },
   option: { padding: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#eee" },
