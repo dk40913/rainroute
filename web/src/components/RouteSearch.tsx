@@ -95,7 +95,10 @@ function GeocodeField({
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") {
+    // Ignore the Enter that commits an IME composition (isComposing /
+    // legacy keyCode 229) — blurring at that instant double-inserts the
+    // committed text. Only a "real" Enter should end editing.
+    if (e.key === "Enter" && !e.nativeEvent.isComposing && e.keyCode !== 229) {
       e.currentTarget.blur();
     }
   }
