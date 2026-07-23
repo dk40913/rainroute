@@ -121,6 +121,11 @@ function GeocodeField({
       {!value.loading && value.searched && value.candidates.length === 0 && (
         <div className="rr-hint">找不到地點</div>
       )}
+      {!value.loading && value.selected && (
+        <div className="rr-selected-hint" title={value.selected.name}>
+          ✓ {value.selected.name}
+        </div>
+      )}
       {!value.loading && value.candidates.length > 0 && (
         <div className="rr-dropdown">
           {value.candidates.slice(0, 5).map((candidate, i) => {

@@ -99,6 +99,11 @@ function GeocodeField({
       {!value.loading && value.searched && value.candidates.length === 0 && (
         <Text style={styles.hint}>找不到地點</Text>
       )}
+      {!value.loading && value.selected && (
+        <Text style={styles.selectedHint} numberOfLines={1}>
+          ✓ {value.selected.name}
+        </Text>
+      )}
       {!value.loading && value.candidates.length > 0 && (
         <View style={styles.dropdown}>
           {value.candidates.slice(0, 5).map((candidate, i) => {
@@ -156,6 +161,7 @@ const styles = StyleSheet.create({
   inputIcon: { fontSize: 16, paddingLeft: 10 },
   input: { flex: 1, padding: 10 },
   hint: { fontSize: 12, color: "#666", paddingHorizontal: 4 },
+  selectedHint: { fontSize: 12, color: "#2e9e5b", paddingHorizontal: 4 },
   dropdown: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, backgroundColor: "#fff" },
   option: { padding: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#eee" },
   optionPrimary: { fontSize: 14, fontWeight: "600", color: "#222" },

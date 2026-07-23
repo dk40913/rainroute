@@ -39,6 +39,15 @@
   padding: 2px 4px;
 }
 
+.rr-selected-hint {
+  font-size: 12px;
+  color: #2e9e5b;
+  padding: 2px 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .rr-dropdown {
   position: absolute;
   z-index: 10;
