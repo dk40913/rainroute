@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { MapLibreMap, Marker, setWorkerUrl, type GeoJSONSource, type ImageSource } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-// Vite doesn't emit maplibre's tile-parsing worker on its own; import it as an
-// asset URL and point maplibre at it, otherwise the built app 404s the worker
-// (SPA fallback serves index.html as text/html and the browser blocks it).
-import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
+// Vite doesn't emit maplibre's tile-parsing worker on its own, and the worker
+// file imports a sibling module (./maplibre-gl-shared.mjs) — so a plain ?url
+// asset would 404 its dependency inside the worker. ?worker&url makes Vite
+// bundle the worker WITH its imports into one standalone file and return its URL.
+import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 
 setWorkerUrl(maplibreWorkerUrl);
 import type { RouteResult, RainResult } from "../types";
