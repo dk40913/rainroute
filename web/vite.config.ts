@@ -7,4 +7,6 @@ export default defineConfig({
   // maplibre-gl's tile-parsing web worker breaks under Vite's dep pre-bundling
   // (worker served with an empty MIME type → blocked → no vector layers render).
   optimizeDeps: { exclude: ["maplibre-gl"] },
+  // Allow serving through Cloudflare quick tunnels (random *.trycloudflare.com hosts).
+  preview: { allowedHosts: [".trycloudflare.com"] },
 })
