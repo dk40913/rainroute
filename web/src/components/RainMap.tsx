@@ -33,7 +33,18 @@ export function RainMap({ route, rain }: { route: RouteResult | null; rain: Rain
     });
     mapRef.current = map;
     map.on("load", () => setReady(true));
+
+    // MapLibre only re-syncs its canvas on the browser's own `resize` event;
+    // it doesn't notice container-only size changes (e.g. flex layout
+    // shifting when the error banner or loading overlay appears/disappears
+    // after submitting a route). Without this the canvas keeps its stale
+    // drawing-buffer size, producing washed-out/misaligned tiles or making
+    // the map appear to vanish.
+    const resizeObserver = new ResizeObserver(() => map.resize());
+    resizeObserver.observe(containerRef.current);
+
     return () => {
+      resizeObserver.disconnect();
       map.remove();
       mapRef.current = null;
     };

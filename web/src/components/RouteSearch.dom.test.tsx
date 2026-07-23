@@ -130,4 +130,26 @@ describe("RouteSearch dropdown", () => {
 
     expect(submit).toHaveProperty("disabled", true);
   });
+
+  it("IME composition: in-progress composition buffer does not leak into committed text", async () => {
+    mockedGeocode.mockResolvedValue(candidates);
+    render(<RouteSearch onSubmit={vi.fn()} />);
+
+    const origin = screen.getByPlaceholderText("出發地") as HTMLInputElement;
+
+    // Some IMEs/browsers fire an `input` event with the in-progress raw
+    // buffer while composing (e.g. raw Zhuyin symbols before they resolve to
+    // Chinese characters). Forcing that into the controlled value mid-
+    // composition is what causes the browser to duplicate the eventually
+    // committed text. The final, correct text only arrives at compositionend.
+    fireEvent.compositionStart(origin);
+    fireEvent.change(origin, { target: { value: "ㄊㄞˊㄅㄟˇ" } });
+    fireEvent.compositionEnd(origin, { target: { value: "台北" } });
+
+    expect(origin.value).toBe("台北");
+
+    fireEvent.blur(origin);
+    await waitFor(() => expect(mockedGeocode).toHaveBeenCalledWith("台北"));
+    expect(mockedGeocode).not.toHaveBeenCalledWith("ㄊㄞˊㄅㄟˇ");
+  });
 });

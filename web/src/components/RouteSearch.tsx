@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { geocode } from "../api";
 import type { GeocodeCandidate } from "../types";
 import "./RouteSearch.css";
@@ -70,6 +70,13 @@ function GeocodeField({
     onChange((prev) => ({ ...prev, text, candidates: [], selected: null, searched: false, lastQueried: null }));
   }
 
+  // While an IME composition is in progress (e.g. Chinese Zhuyin/Pinyin),
+  // leave the input's DOM value under the browser's control: forcing React's
+  // controlled `value` back onto the element mid-composition confuses the
+  // IME and causes the committed text to be duplicated. Only sync the final
+  // text into state once composition ends.
+  const isComposingRef = useRef(false);
+
   function handleSelect(candidate: GeocodeCandidate) {
     const primary = primaryName(candidate.name);
     onChange({
@@ -96,7 +103,17 @@ function GeocodeField({
           className="rr-input"
           placeholder={placeholder}
           value={value.text}
-          onChange={(e) => handleChangeText(e.target.value)}
+          onChange={(e) => {
+            if (isComposingRef.current) return;
+            handleChangeText(e.target.value);
+          }}
+          onCompositionStart={() => {
+            isComposingRef.current = true;
+          }}
+          onCompositionEnd={(e) => {
+            isComposingRef.current = false;
+            handleChangeText(e.currentTarget.value);
+          }}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
         />
