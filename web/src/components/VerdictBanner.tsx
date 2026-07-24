@@ -26,9 +26,11 @@ export function VerdictBanner({ result }: { result: RainResult | null }) {
       ? recommend
         ? `沿途約 ${result.wetSegments.length} 個點有雨`
         : null
-      : result.nowcast
-        ? "全程預計無雨（含雨區移動預測）"
-        : "目前雷達顯示全程無雨");
+      : result.rainNearby
+        ? "路線本身無雨，但沿線 2 公里內有雨區，可能短暫飄雨"
+        : result.nowcast
+          ? "全程預計無雨（含雨區移動預測）"
+          : "目前雷達顯示全程無雨");
   return (
     <div className="rr-banner" style={{ backgroundColor: recommend ? "#d64545" : "#2e9e5b" }}>
       <div className="rr-banner-text">{recommend ? "建議穿雨衣 ☔" : "不需要穿雨衣 ☀"}</div>

@@ -13,4 +13,5 @@ export type RainResult = {
   nowcast?: boolean;
   rainStartMin?: number | null;
   rainEndMin?: number | null;
+  rainNearby?: boolean;
 };

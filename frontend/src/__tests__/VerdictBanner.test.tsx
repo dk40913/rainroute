@@ -23,6 +23,12 @@ test("shows no-raincoat message", async () => {
   expect(getByText(/不需要穿雨衣/)).toBeTruthy();
 });
 
+test("dry route with rain nearby shows the drift warning", async () => {
+  const { getByText } = await render(
+    <VerdictBanner result={{ ...base, verdict: "no_raincoat_needed", nowcast: true, rainNearby: true }} />);
+  expect(getByText("路線本身無雨，但沿線 2 公里內有雨區，可能短暫飄雨")).toBeTruthy();
+});
+
 test("dry route shows the nowcast status line", async () => {
   const { getByText } = await render(
     <VerdictBanner result={{ ...base, verdict: "no_raincoat_needed", nowcast: true }} />);

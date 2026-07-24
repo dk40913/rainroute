@@ -80,7 +80,7 @@ async def rain_endpoint(req: RainRequest) -> RainResponse:
     radar_client = get_radar_client()
     radar = await radar_client.fetch()
     motion = radar_client.motion()
-    verdict, max_level, wet = classify_route(
+    verdict, max_level, wet, rain_nearby = classify_route(
         req.polyline, radar, settings.sample_interval_m,
         duration_s=req.duration_s, motion=motion,
     )
@@ -99,4 +99,5 @@ async def rain_endpoint(req: RainRequest) -> RainResponse:
         nowcast=motion is not None and req.duration_s is not None,
         rain_start_min=min(wet_etas) if wet_etas else None,
         rain_end_min=max(wet_etas) if wet_etas else None,
+        rain_nearby=rain_nearby,
     )

@@ -93,3 +93,6 @@ class RainResponse(BaseModel):
     nowcast: bool = False
     rain_start_min: int | None = None
     rain_end_min: int | None = None
+    # Route itself is dry but echo exists within ~2 km of it — nearby cells
+    # can drift or grow onto the route within a ride.
+    rain_nearby: bool = False

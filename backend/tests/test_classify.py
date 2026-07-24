@@ -23,7 +23,7 @@ def _half_radar(west_fill, east_fill, split_lng=120.75):
 def test_clear_sky_no_raincoat():
     radar = _radar((0, 0, 0, 0))  # fully transparent = no echo
     line = [(25.0, 121.0), (25.05, 121.0)]
-    verdict, max_level, wet = classify_route(line, radar, interval_m=500.0)
+    verdict, max_level, wet, _ = classify_route(line, radar, interval_m=500.0)
     assert verdict == "no_raincoat_needed"
     assert max_level == RainLevel.NONE
     assert wet == []
@@ -32,7 +32,7 @@ def test_clear_sky_no_raincoat():
 def test_heavy_rain_recommends_raincoat():
     radar = _radar((255, 0, 0, 255))  # red everywhere = heavy
     line = [(25.0, 121.0), (25.05, 121.0)]
-    verdict, max_level, wet = classify_route(line, radar, interval_m=500.0)
+    verdict, max_level, wet, _ = classify_route(line, radar, interval_m=500.0)
     assert verdict == "raincoat_recommended"
     assert max_level == RainLevel.HEAVY
     assert len(wet) >= 1
@@ -48,14 +48,37 @@ EASTWARD = Motion(dlat_per_s=0.0, dlng_per_s=0.001)  # rain field moving east
 
 def test_static_sampling_ignores_incoming_rain():
     radar = _half_radar(RED, CLEAR)
-    verdict, max_level, wet = classify_route(EAST_ROUTE, radar, interval_m=500.0)
+    verdict, max_level, wet, _ = classify_route(EAST_ROUTE, radar, interval_m=500.0)
     assert verdict == "no_raincoat_needed"
     assert wet == []
 
 
+def test_rain_just_off_the_route_sets_rain_nearby():
+    # 1150 px over 11.5° -> 1 px ≈ 1 km, fine enough for km-scale geometry.
+    # Rain west of 120.995 misses the route (121.0..121.2) by ~1 km; the 2 km
+    # nearby ring must still see it while the centerline stays dry.
+    img = Image.new("RGBA", (1150, 1150), (0, 0, 0, 0))
+    split_x = int((120.995 - GEO.left_lon) / (GEO.right_lon - GEO.left_lon) * 1150)
+    for x in range(split_x):
+        for y in range(1150):
+            img.putpixel((x, y), RED)
+    radar = RadarImage(image=img, geo=GEO, time="2026-07-21T14:30:00+08:00")
+    verdict, _, wet, nearby = classify_route(EAST_ROUTE, radar, interval_m=500.0)
+    assert verdict == "no_raincoat_needed"
+    assert wet == []
+    assert nearby is True
+
+
+def test_clear_everywhere_leaves_rain_nearby_false():
+    radar = _radar((0, 0, 0, 0))
+    _, _, wet, nearby = classify_route(EAST_ROUTE, radar, interval_m=500.0)
+    assert wet == []
+    assert nearby is False
+
+
 def test_nowcast_sees_rain_arriving_mid_ride():
     radar = _half_radar(RED, CLEAR)
-    verdict, max_level, wet = classify_route(
+    verdict, max_level, wet, _ = classify_route(
         EAST_ROUTE, radar, interval_m=500.0, duration_s=1200.0, motion=EASTWARD
     )
     # Rain (moving east at 0.001°/s) reaches the rider's position for every
@@ -71,7 +94,7 @@ def test_nowcast_sees_rain_arriving_mid_ride():
 
 def test_nowcast_sees_rain_leaving_before_arrival():
     radar = _half_radar(CLEAR, RED)  # rain on the route now, moving east/away
-    verdict, max_level, wet = classify_route(
+    verdict, max_level, wet, _ = classify_route(
         EAST_ROUTE, radar, interval_m=500.0, duration_s=1200.0, motion=EASTWARD
     )
     # Only the first ~5 minutes still catch the departing rain.
@@ -81,21 +104,21 @@ def test_nowcast_sees_rain_leaving_before_arrival():
 
 def test_duration_without_motion_keeps_static_field_but_reports_eta():
     radar = _radar(RED)
-    _, _, wet = classify_route(EAST_ROUTE, radar, interval_m=500.0, duration_s=1200.0)
+    _, _, wet, _ = classify_route(EAST_ROUTE, radar, interval_m=500.0, duration_s=1200.0)
     assert wet[0].eta_min == 0
     assert wet[-1].eta_min == 20
 
 
 def test_no_duration_reports_no_eta():
     radar = _radar(RED)
-    _, _, wet = classify_route(EAST_ROUTE, radar, interval_m=500.0)
+    _, _, wet, _ = classify_route(EAST_ROUTE, radar, interval_m=500.0)
     assert all(w.eta_min is None for w in wet)
 
 
 def test_light_only_no_raincoat_but_segments_reported():
     radar = _radar((0, 236, 236, 255))  # cyan = light
     line = [(25.0, 121.0), (25.05, 121.0)]
-    verdict, max_level, wet = classify_route(line, radar, interval_m=500.0)
+    verdict, max_level, wet, _ = classify_route(line, radar, interval_m=500.0)
     assert verdict == "no_raincoat_needed"
     assert max_level == RainLevel.LIGHT
     assert len(wet) >= 1  # light rain still surfaced to the user
