@@ -65,6 +65,20 @@ def test_rain_endpoint_heavy():
     assert body["radar_time"] == "2026-07-21T14:30:00+08:00"
 
 
+def test_overlay_endpoint():
+    radar = RadarImage(image=Image.new("RGBA", (50, 50), (0, 0, 0, 0)),
+                       geo=GEO, time="2026-07-21T14:30:00+08:00")
+    fake_client = AsyncMock()
+    fake_client.fetch = AsyncMock(return_value=radar)
+    with patch("app.main.get_radar_client", return_value=fake_client):
+        resp = client.get("/overlay")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["image_url"] == "/radar.png"
+    assert body["bbox"] == [115.0, 17.75, 126.5, 29.25]
+    assert body["radar_time"] == "2026-07-21T14:30:00+08:00"
+
+
 def test_cors_headers():
     """Test that CORS headers are present in response."""
     resp = client.get("/health", headers={"origin": "http://example.com"})

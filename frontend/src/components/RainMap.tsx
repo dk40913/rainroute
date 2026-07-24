@@ -1,12 +1,12 @@
 import React from "react";
 import { Map, Camera, GeoJSONSource, ImageSource, Layer } from "@maplibre/maplibre-react-native";
-import { RouteResult, RainResult } from "../types";
+import { Overlay, RouteResult } from "../types";
 import { resolveUrl } from "../api";
 
 // Free, key-less vector style.
 const STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
 
-export function RainMap({ route, rain }: { route: RouteResult | null; rain: RainResult | null }) {
+export function RainMap({ route, overlay }: { route: RouteResult | null; overlay: Overlay | null }) {
   const lineGeoJSON = route && {
     type: "Feature" as const,
     geometry: { type: "LineString" as const, coordinates: route.polyline.map(([lat, lng]) => [lng, lat]) },
@@ -26,8 +26,8 @@ export function RainMap({ route, rain }: { route: RouteResult | null; rain: Rain
   })();
 
   // bbox = [west, south, east, north] -> 4 corners clockwise from top-left
-  const corners = rain && (() => {
-    const [w, s, e, n] = rain.overlay.bbox;
+  const corners = overlay && (() => {
+    const [w, s, e, n] = overlay.bbox;
     return [[w, n], [e, n], [e, s], [w, s]] as [[number, number], [number, number], [number, number], [number, number]];
   })();
 
@@ -53,7 +53,7 @@ export function RainMap({ route, rain }: { route: RouteResult | null; rain: Rain
       )}
 
       {corners && (
-        <ImageSource id="radar" coordinates={corners} url={resolveUrl(rain!.overlay.imageUrl)}>
+        <ImageSource id="radar" coordinates={corners} url={resolveUrl(overlay!.imageUrl)}>
           <Layer type="raster" id="radar-layer" paint={{ "raster-opacity": 0.5 }} />
         </ImageSource>
       )}

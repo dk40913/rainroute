@@ -1,5 +1,5 @@
 import { BACKEND_BASE_URL } from "./config";
-import type { GeocodeCandidate, LatLng, RouteResult, RainResult, WetSegment } from "./types";
+import type { GeocodeCandidate, LatLng, OverlayResult, RouteResult, RainResult, WetSegment } from "./types";
 
 type RainWire = {
   verdict: "raincoat_recommended" | "no_raincoat_needed";
@@ -37,6 +37,13 @@ export async function checkRain(polyline: [number, number][]): Promise<RainResul
     wetSegments: d.wet_segments, radarTime: d.radar_time,
     overlay: { imageUrl: d.overlay.image_url, bbox: d.overlay.bbox },
   };
+}
+
+export async function fetchOverlay(): Promise<OverlayResult> {
+  const resp = await fetch(`${BACKEND_BASE_URL}/overlay`);
+  if (!resp.ok) throw new Error(`/overlay failed: ${resp.status}`);
+  const d = (await resp.json()) as { image_url: string; bbox: [number, number, number, number]; radar_time: string };
+  return { imageUrl: d.image_url, bbox: d.bbox, radarTime: d.radar_time };
 }
 
 export function resolveUrl(path: string): string {

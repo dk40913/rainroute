@@ -7,7 +7,7 @@ from app.config import get_settings
 from app.deps import get_radar_client
 from app.models import (
     GeocodeRequest, RouteRequest, RainRequest, RouteResponse,
-    RainResponse, Overlay,
+    RainResponse, Overlay, OverlayResponse,
 )
 from app.geocode import geocode
 from app.routing import plan_route, RouteNotFoundError
@@ -50,6 +50,17 @@ async def health() -> dict[str, str]:
 async def radar_png() -> Response:
     radar = await get_radar_client().fetch()
     return Response(content=radar.png_bytes, media_type="image/png")
+
+
+@app.get("/overlay", response_model=OverlayResponse)
+async def overlay_endpoint() -> OverlayResponse:
+    radar = await get_radar_client().fetch()
+    geo = radar.geo
+    return OverlayResponse(
+        image_url="/radar.png",
+        bbox=(geo.left_lon, geo.bottom_lat, geo.right_lon, geo.top_lat),
+        radar_time=radar.time,
+    )
 
 
 @app.post("/geocode")

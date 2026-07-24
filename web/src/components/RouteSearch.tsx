@@ -196,9 +196,11 @@ function GeocodeField({
 
 export function RouteSearch({
   onSubmit,
+  onShowRadar,
   disabled,
 }: {
   onSubmit: (origin: GeocodeCandidate, destination: GeocodeCandidate) => void;
+  onShowRadar?: () => void;
   disabled?: boolean;
 }) {
   const [origin, setOrigin] = useState<FieldState>(initialField);
@@ -221,6 +223,11 @@ export function RouteSearch({
       >
         查詢路線
       </button>
+      {onShowRadar && (
+        <button className="rr-submit rr-radar-only" onClick={onShowRadar} disabled={disabled}>
+          直接看雨區
+        </button>
+      )}
     </div>
   );
 }

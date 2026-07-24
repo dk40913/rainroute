@@ -65,6 +65,10 @@ class Overlay(BaseModel):
     bbox: tuple[float, float, float, float]  # (west, south, east, north)
 
 
+class OverlayResponse(Overlay):
+    radar_time: str
+
+
 class RainResponse(BaseModel):
     verdict: str
     max_level: str

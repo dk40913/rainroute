@@ -3,6 +3,7 @@ export type GeocodeCandidate = { name: string; lat: number; lng: number; approxi
 export type RouteResult = { polyline: [number, number][]; distanceM: number; durationS: number };
 export type WetSegment = { index: number; lat: number; lng: number; level: string };
 export type Overlay = { imageUrl: string; bbox: [number, number, number, number] };
+export type OverlayResult = Overlay & { radarTime: string };
 export type RainResult = {
   verdict: "raincoat_recommended" | "no_raincoat_needed";
   maxLevel: string;

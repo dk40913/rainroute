@@ -120,6 +120,14 @@
   cursor: not-allowed;
 }
 
+.rr-radar-only {
+  background: #546e7a;
+}
+
+.rr-radar-only:disabled {
+  background: #9fadb4;
+}
+
 @media (prefers-color-scheme: dark) {
   .rr-input-row,
   .rr-dropdown {

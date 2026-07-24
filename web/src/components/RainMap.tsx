@@ -8,7 +8,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 
 setWorkerUrl(maplibreWorkerUrl);
-import type { RouteResult, RainResult } from "../types";
+import type { Overlay, RouteResult } from "../types";
 import { resolveUrl } from "../api";
 
 type GeoJSONLineFeature = {
@@ -24,7 +24,7 @@ const ROUTE_LAYER_ID = "route-line";
 const RADAR_SOURCE_ID = "radar";
 const RADAR_LAYER_ID = "radar-layer";
 
-export function RainMap({ route, rain }: { route: RouteResult | null; rain: RainResult | null }) {
+export function RainMap({ route, overlay }: { route: RouteResult | null; overlay: Overlay | null }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const originMarkerRef = useRef<Marker | null>(null);
@@ -122,21 +122,21 @@ export function RainMap({ route, rain }: { route: RouteResult | null; rain: Rain
     const map = mapRef.current;
     if (!map || !ready) return;
 
-    if (!rain) {
+    if (!overlay) {
       if (map.getLayer(RADAR_LAYER_ID)) map.removeLayer(RADAR_LAYER_ID);
       if (map.getSource(RADAR_SOURCE_ID)) map.removeSource(RADAR_SOURCE_ID);
       return;
     }
 
     // bbox = [west, south, east, north] -> 4 corners clockwise from top-left
-    const [w, s, e, n] = rain.overlay.bbox;
+    const [w, s, e, n] = overlay.bbox;
     const coordinates: [[number, number], [number, number], [number, number], [number, number]] = [
       [w, n],
       [e, n],
       [e, s],
       [w, s],
     ];
-    const url = resolveUrl(rain.overlay.imageUrl);
+    const url = resolveUrl(overlay.imageUrl);
 
     const existingSource = map.getSource(RADAR_SOURCE_ID) as ImageSource | undefined;
     if (existingSource) {
@@ -151,7 +151,7 @@ export function RainMap({ route, rain }: { route: RouteResult | null; rain: Rain
         beforeId,
       );
     }
-  }, [rain, ready]);
+  }, [overlay, ready]);
 
   return <div ref={containerRef} style={{ width: "100%", height: "100%" }} />;
 }

@@ -161,9 +161,11 @@ function GeocodeField({
 
 export function RouteSearch({
   onSubmit,
+  onShowRadar,
   disabled,
 }: {
   onSubmit: (origin: GeocodeCandidate, destination: GeocodeCandidate) => void;
+  onShowRadar?: () => void;
   disabled?: boolean;
 }) {
   const [origin, setOrigin] = useState<FieldState>(initialField);
@@ -185,6 +187,17 @@ export function RouteSearch({
         }}
         disabled={disabled || !bothSelected}
       />
+      {onShowRadar && (
+        <Button
+          title="直接看雨區"
+          color="#546e7a"
+          onPress={() => {
+            Keyboard.dismiss();
+            onShowRadar();
+          }}
+          disabled={disabled}
+        />
+      )}
     </View>
   );
 }

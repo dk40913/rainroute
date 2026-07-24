@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { checkRain, geocode, planRoute, resolveUrl } from "./api";
+import { checkRain, fetchOverlay, geocode, planRoute, resolveUrl } from "./api";
 
 function mockFetchOnce(body: unknown) {
   vi.stubGlobal(
@@ -52,6 +52,18 @@ describe("checkRain", () => {
       wetSegments: [{ index: 0, lat: 25.0, lng: 121.5, level: "HEAVY" }],
       radarTime: "2026-07-23T00:00:00Z",
       overlay: { imageUrl: "/radar.png", bbox: [120, 21, 122, 25] },
+    });
+  });
+});
+
+describe("fetchOverlay", () => {
+  it("maps snake_case wire fields to camelCase", async () => {
+    mockFetchOnce({ image_url: "/radar.png", bbox: [115, 17.75, 126.5, 29.25], radar_time: "2026-07-24T00:00:00Z" });
+    const result = await fetchOverlay();
+    expect(result).toEqual({
+      imageUrl: "/radar.png",
+      bbox: [115, 17.75, 126.5, 29.25],
+      radarTime: "2026-07-24T00:00:00Z",
     });
   });
 });

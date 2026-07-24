@@ -1,5 +1,5 @@
 jest.mock("expo-constants", () => ({ expoConfig: { extra: { backendBaseUrl: "http://api" } } }));
-import { geocode, planRoute, checkRain, resolveUrl } from "../api";
+import { geocode, planRoute, checkRain, fetchOverlay, resolveUrl } from "../api";
 
 function mockFetchOnce(body: unknown) {
   (global as any).fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => body });
@@ -38,6 +38,13 @@ test("checkRain maps verdict and overlay", async () => {
     "http://api/rain",
     expect.objectContaining({ method: "POST", body: JSON.stringify({ polyline: [[25.0, 121.0]] }) }),
   );
+});
+
+test("fetchOverlay maps wire fields and uses GET", async () => {
+  mockFetchOnce({ image_url: "/radar.png", bbox: [115, 17.75, 126.5, 29.25], radar_time: "t" });
+  const out = await fetchOverlay();
+  expect(out).toEqual({ imageUrl: "/radar.png", bbox: [115, 17.75, 126.5, 29.25], radarTime: "t" });
+  expect((global as any).fetch).toHaveBeenCalledWith("http://api/overlay");
 });
 
 test("geocode rejects when response is not ok", async () => {
