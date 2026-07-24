@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TextInput, Pressable, Button, StyleSheet, Keyboard, Alert } from "react-native";
 import * as Location from "expo-location";
 import { geocode } from "../api";
+import { HistoryEntry } from "../history";
 import { GeocodeCandidate } from "../types";
 
 function primaryName(name: string): string {
@@ -159,19 +160,39 @@ function GeocodeField({
   );
 }
 
+function fieldFromCandidate(candidate: GeocodeCandidate): FieldState {
+  const primary = primaryName(candidate.name);
+  return {
+    text: primary,
+    candidates: [],
+    selected: candidate,
+    loading: false,
+    searched: false,
+    lastQueried: primary,
+  };
+}
+
 export function RouteSearch({
   onSubmit,
   onShowRadar,
+  history,
   disabled,
 }: {
   onSubmit: (origin: GeocodeCandidate, destination: GeocodeCandidate) => void;
   onShowRadar?: () => void;
+  history?: HistoryEntry[];
   disabled?: boolean;
 }) {
   const [origin, setOrigin] = useState<FieldState>(initialField);
   const [destination, setDestination] = useState<FieldState>(initialField);
 
   const bothSelected = origin.selected !== null && destination.selected !== null;
+
+  function handlePickHistory(entry: HistoryEntry) {
+    setOrigin(fieldFromCandidate(entry.origin));
+    setDestination(fieldFromCandidate(entry.destination));
+    onSubmit(entry.origin, entry.destination);
+  }
 
   return (
     <View style={styles.box}>
@@ -198,6 +219,21 @@ export function RouteSearch({
           disabled={disabled}
         />
       )}
+      {history && history.length > 0 && (
+        <View style={styles.history}>
+          {history.map((entry, i) => (
+            <Pressable
+              key={`${entry.origin.name}-${entry.destination.name}-${i}`}
+              onPress={() => handlePickHistory(entry)}
+              disabled={disabled}
+            >
+              <Text style={styles.historyItem} numberOfLines={1}>
+                🕘 {primaryName(entry.origin.name)} → {primaryName(entry.destination.name)}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -217,4 +253,6 @@ const styles = StyleSheet.create({
   option: { padding: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#eee" },
   optionPrimary: { fontSize: 14, fontWeight: "600", color: "#222" },
   optionSecondary: { fontSize: 11, color: "#888" },
+  history: { gap: 4 },
+  historyItem: { fontSize: 13, color: "#666", paddingVertical: 2, paddingHorizontal: 4 },
 });

@@ -153,6 +153,20 @@ test("comma-separated candidate names render a two-line row and fill the field w
   expect(getByDisplayValue("捷運台北車站")).toBeTruthy();
 });
 
+test("picking a history entry fills both fields and resubmits the query", async () => {
+  const onSubmit = jest.fn();
+  const entry = { origin: TAIPEI_FULL, destination: TAMSUI };
+  const { getByText, getByDisplayValue } = await render(
+    <RouteSearch onSubmit={onSubmit} history={[entry]} />,
+  );
+
+  await fireEvent.press(getByText("🕘 捷運台北車站 → 淡水"));
+
+  expect(onSubmit).toHaveBeenCalledWith(TAIPEI_FULL, TAMSUI);
+  expect(getByDisplayValue("捷運台北車站")).toBeTruthy();
+  expect(getByDisplayValue("淡水")).toBeTruthy();
+});
+
 test("locate button fills the field with 目前位置 and selects the coordinates", async () => {
   mockedRequestPermission.mockResolvedValue({ status: "granted" });
   mockedGetPosition.mockResolvedValue({ coords: { latitude: 25.05, longitude: 121.55 } });

@@ -161,6 +161,21 @@ describe("RouteSearch dropdown", () => {
     vi.unstubAllGlobals();
   });
 
+  it("picking a history entry fills both fields and resubmits the query", async () => {
+    const onSubmit = vi.fn();
+    const entry = {
+      origin: { name: "台北車站, 中正區, 台北市", lat: 25.0478, lng: 121.517 },
+      destination: { name: "淡水, 新北市", lat: 25.17, lng: 121.44 },
+    };
+    render(<RouteSearch onSubmit={onSubmit} history={[entry]} />);
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "🕘 台北車站 → 淡水" }));
+
+    expect(onSubmit).toHaveBeenCalledWith(entry.origin, entry.destination);
+    expect(screen.getByPlaceholderText("出發地")).toHaveProperty("value", "台北車站");
+    expect(screen.getByPlaceholderText("目的地")).toHaveProperty("value", "淡水");
+  });
+
   it("IME composition: in-progress composition buffer does not leak into committed text", async () => {
     mockedGeocode.mockResolvedValue(candidates);
     render(<RouteSearch onSubmit={vi.fn()} />);

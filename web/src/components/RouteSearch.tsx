@@ -1,5 +1,6 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { geocode } from "../api";
+import type { HistoryEntry } from "../history";
 import type { GeocodeCandidate } from "../types";
 import "./RouteSearch.css";
 
@@ -107,6 +108,15 @@ function GeocodeField({
   // whole class of bugs; we only write to the DOM when a candidate is picked.
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Sync the DOM value when a selection is applied from outside this field
+  // (e.g. picking a history entry). Guarded on `selected` so it never fights
+  // the IME while the user is typing (typing clears the selection).
+  useEffect(() => {
+    if (value.selected && inputRef.current && inputRef.current.value !== value.text) {
+      inputRef.current.value = value.text;
+    }
+  }, [value.selected, value.text]);
+
   function handleSelect(candidate: GeocodeCandidate) {
     const primary = primaryName(candidate.name);
     if (inputRef.current) inputRef.current.value = primary;
@@ -194,19 +204,39 @@ function GeocodeField({
   );
 }
 
+function fieldFromCandidate(candidate: GeocodeCandidate): FieldState {
+  const primary = primaryName(candidate.name);
+  return {
+    text: primary,
+    candidates: [],
+    selected: candidate,
+    loading: false,
+    searched: false,
+    lastQueried: primary,
+  };
+}
+
 export function RouteSearch({
   onSubmit,
   onShowRadar,
+  history,
   disabled,
 }: {
   onSubmit: (origin: GeocodeCandidate, destination: GeocodeCandidate) => void;
   onShowRadar?: () => void;
+  history?: HistoryEntry[];
   disabled?: boolean;
 }) {
   const [origin, setOrigin] = useState<FieldState>(initialField);
   const [destination, setDestination] = useState<FieldState>(initialField);
 
   const bothSelected = origin.selected !== null && destination.selected !== null;
+
+  function handlePickHistory(entry: HistoryEntry) {
+    setOrigin(fieldFromCandidate(entry.origin));
+    setDestination(fieldFromCandidate(entry.destination));
+    onSubmit(entry.origin, entry.destination);
+  }
 
   return (
     <div className="rr-box">
@@ -227,6 +257,20 @@ export function RouteSearch({
         <button className="rr-submit rr-radar-only" onClick={onShowRadar} disabled={disabled}>
           直接看雨區
         </button>
+      )}
+      {history && history.length > 0 && (
+        <div className="rr-history">
+          {history.map((entry, i) => (
+            <button
+              key={`${entry.origin.name}-${entry.destination.name}-${i}`}
+              className="rr-history-item"
+              onClick={() => handlePickHistory(entry)}
+              disabled={disabled}
+            >
+              🕘 {primaryName(entry.origin.name)} → {primaryName(entry.destination.name)}
+            </button>
+          ))}
+        </div>
       )}
     </div>
   );
