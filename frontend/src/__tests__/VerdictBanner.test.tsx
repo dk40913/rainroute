@@ -23,6 +23,12 @@ test("shows no-raincoat message", async () => {
   expect(getByText(/不需要穿雨衣/)).toBeTruthy();
 });
 
+test("dry route shows the nowcast status line", async () => {
+  const { getByText } = await render(
+    <VerdictBanner result={{ ...base, verdict: "no_raincoat_needed", nowcast: true }} />);
+  expect(getByText("全程預計無雨（含雨區移動預測）")).toBeTruthy();
+});
+
 test("shows the rain window instead of the point count when available", async () => {
   const wetSegments: WetSegment[] = [{ index: 0, lat: 25.03, lng: 121.56, level: "heavy", eta_min: 5 }];
   const { getByText, queryByText } = await render(

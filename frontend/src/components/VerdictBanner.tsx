@@ -23,7 +23,13 @@ export function VerdictBanner({ result }: { result: RainResult | null }) {
   const windowText = result.wetSegments.length > 0 ? rainWindowText(result) : null;
   const sub =
     windowText ??
-    (recommend && result.wetSegments.length > 0 ? `沿途約 ${result.wetSegments.length} 個點有雨` : null);
+    (result.wetSegments.length > 0
+      ? recommend
+        ? `沿途約 ${result.wetSegments.length} 個點有雨`
+        : null
+      : result.nowcast
+        ? "全程預計無雨（含雨區移動預測）"
+        : "目前雷達顯示全程無雨");
   return (
     <View style={[styles.banner, { backgroundColor: recommend ? "#d64545" : "#2e9e5b" }]}>
       <Text style={styles.text}>{recommend ? "建議穿雨衣 ☔" : "不需要穿雨衣 ☀"}</Text>

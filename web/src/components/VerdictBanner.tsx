@@ -20,9 +20,15 @@ export function VerdictBanner({ result }: { result: RainResult | null }) {
   if (!result) return null;
   const recommend = result.verdict === "raincoat_recommended";
   const windowText = result.wetSegments.length > 0 ? rainWindowText(result) : null;
-  const sub = windowText ?? (recommend && result.wetSegments.length > 0
-    ? `沿途約 ${result.wetSegments.length} 個點有雨`
-    : null);
+  const sub =
+    windowText ??
+    (result.wetSegments.length > 0
+      ? recommend
+        ? `沿途約 ${result.wetSegments.length} 個點有雨`
+        : null
+      : result.nowcast
+        ? "全程預計無雨（含雨區移動預測）"
+        : "目前雷達顯示全程無雨");
   return (
     <div className="rr-banner" style={{ backgroundColor: recommend ? "#d64545" : "#2e9e5b" }}>
       <div className="rr-banner-text">{recommend ? "建議穿雨衣 ☔" : "不需要穿雨衣 ☀"}</div>
