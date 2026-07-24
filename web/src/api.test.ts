@@ -52,6 +52,9 @@ describe("checkRain", () => {
       wetSegments: [{ index: 0, lat: 25.0, lng: 121.5, level: "HEAVY" }],
       radarTime: "2026-07-23T00:00:00Z",
       overlay: { imageUrl: "/radar.png", bbox: [120, 21, 122, 25] },
+      nowcast: false,
+      rainStartMin: null,
+      rainEndMin: null,
     });
   });
 });

@@ -23,6 +23,24 @@ test("shows no-raincoat message", async () => {
   expect(getByText(/不需要穿雨衣/)).toBeTruthy();
 });
 
+test("shows the rain window instead of the point count when available", async () => {
+  const wetSegments: WetSegment[] = [{ index: 0, lat: 25.03, lng: 121.56, level: "heavy", eta_min: 5 }];
+  const { getByText, queryByText } = await render(
+    <VerdictBanner
+      result={{
+        ...base,
+        wetSegments,
+        verdict: "raincoat_recommended",
+        nowcast: true,
+        rainStartMin: 5,
+        rainEndMin: 18,
+      }}
+    />,
+  );
+  expect(getByText("出發後第 5~18 分鐘會遇雨（含雨區移動預測）")).toBeTruthy();
+  expect(queryByText(/個點有雨/)).toBeNull();
+});
+
 test("shows wet-segment count for raincoat verdict, hides it for no-raincoat verdict", async () => {
   const wetSegments: WetSegment[] = [
     { index: 0, lat: 25.03, lng: 121.56, level: "heavy" },

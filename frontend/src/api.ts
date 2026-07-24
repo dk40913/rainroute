@@ -7,6 +7,9 @@ type RainWire = {
   wet_segments: WetSegment[];
   radar_time: string;
   overlay: { image_url: string; bbox: [number, number, number, number] };
+  nowcast?: boolean;
+  rain_start_min?: number | null;
+  rain_end_min?: number | null;
 };
 
 async function post<T>(path: string, body: unknown): Promise<T> {
@@ -30,12 +33,15 @@ export async function planRoute(origin: LatLng, destination: LatLng): Promise<Ro
   return { polyline: d.polyline, distanceM: d.distance_m, durationS: d.duration_s };
 }
 
-export async function checkRain(polyline: [number, number][]): Promise<RainResult> {
-  const d = await post<RainWire>("/rain", { polyline });
+export async function checkRain(polyline: [number, number][], durationS?: number): Promise<RainResult> {
+  const d = await post<RainWire>("/rain", { polyline, duration_s: durationS ?? null });
   return {
     verdict: d.verdict, maxLevel: d.max_level,
     wetSegments: d.wet_segments, radarTime: d.radar_time,
     overlay: { imageUrl: d.overlay.image_url, bbox: d.overlay.bbox },
+    nowcast: d.nowcast ?? false,
+    rainStartMin: d.rain_start_min ?? null,
+    rainEndMin: d.rain_end_min ?? null,
   };
 }
 

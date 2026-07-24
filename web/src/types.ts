@@ -1,7 +1,7 @@
 export type LatLng = { lat: number; lng: number };
 export type GeocodeCandidate = { name: string; lat: number; lng: number; approximate?: boolean };
 export type RouteResult = { polyline: [number, number][]; distanceM: number; durationS: number };
-export type WetSegment = { index: number; lat: number; lng: number; level: string };
+export type WetSegment = { index: number; lat: number; lng: number; level: string; eta_min?: number | null };
 export type Overlay = { imageUrl: string; bbox: [number, number, number, number] };
 export type OverlayResult = Overlay & { radarTime: string };
 export type RainResult = {
@@ -10,4 +10,7 @@ export type RainResult = {
   wetSegments: WetSegment[];
   radarTime: string;
   overlay: Overlay;
+  nowcast?: boolean;
+  rainStartMin?: number | null;
+  rainEndMin?: number | null;
 };

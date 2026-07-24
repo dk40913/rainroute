@@ -27,7 +27,7 @@ export function MainScreen() {
       const r = await planRoute({ lat: origin.lat, lng: origin.lng }, { lat: destination.lat, lng: destination.lng });
       setRoute(r);
       setHistory(saveHistory({ origin, destination }));
-      setRain(await checkRain(r.polyline));
+      setRain(await checkRain(r.polyline, r.durationS));
     } catch (e: any) {
       setError(e.message ?? String(e));
     } finally {
