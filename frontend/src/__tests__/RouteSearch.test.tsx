@@ -6,8 +6,17 @@ import { RouteSearch } from "../components/RouteSearch";
 import { geocode } from "../api";
 
 jest.mock("../api", () => ({ geocode: jest.fn() }));
+jest.mock("expo-location", () => ({
+  requestForegroundPermissionsAsync: jest.fn(),
+  getCurrentPositionAsync: jest.fn(),
+  Accuracy: { Balanced: 3 },
+}));
+
+import * as Location from "expo-location";
 
 const mockedGeocode = geocode as jest.Mock;
+const mockedRequestPermission = Location.requestForegroundPermissionsAsync as jest.Mock;
+const mockedGetPosition = Location.getCurrentPositionAsync as jest.Mock;
 
 const TAIPEI = { name: "台北車站", lat: 25.04, lng: 121.51 };
 const TAMSUI = { name: "淡水", lat: 25.17, lng: 121.44 };
@@ -142,6 +151,17 @@ test("comma-separated candidate names render a two-line row and fill the field w
 
   await fireEvent.press(getByText("捷運台北車站"));
   expect(getByDisplayValue("捷運台北車站")).toBeTruthy();
+});
+
+test("locate button fills the field with 目前位置 and selects the coordinates", async () => {
+  mockedRequestPermission.mockResolvedValue({ status: "granted" });
+  mockedGetPosition.mockResolvedValue({ coords: { latitude: 25.05, longitude: 121.55 } });
+  const { getByLabelText, getByText, getByDisplayValue } = await render(<RouteSearch onSubmit={jest.fn()} />);
+
+  await fireEvent.press(getByLabelText("出發地使用目前位置"));
+
+  await waitFor(() => expect(getByDisplayValue("目前位置")).toBeTruthy());
+  expect(getByText("✓ 目前位置")).toBeTruthy();
 });
 
 test("dismisses the keyboard on submit once both fields are selected", async () => {

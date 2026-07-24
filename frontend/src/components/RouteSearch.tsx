@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Pressable, Button, StyleSheet, Keyboard } from "react-native";
+import { View, Text, TextInput, Pressable, Button, StyleSheet, Keyboard, Alert } from "react-native";
+import * as Location from "expo-location";
 import { geocode } from "../api";
 import { GeocodeCandidate } from "../types";
 
@@ -82,6 +83,26 @@ function GeocodeField({
     });
   }
 
+  const [locating, setLocating] = useState(false);
+
+  async function handleLocate() {
+    if (locating) return;
+    setLocating(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("無法取得定位", "請在「設定」中允許 RainRoute 使用定位");
+        return;
+      }
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      handleSelect({ name: "目前位置", lat: pos.coords.latitude, lng: pos.coords.longitude });
+    } catch (e: any) {
+      Alert.alert("無法取得定位", e.message ?? String(e));
+    } finally {
+      setLocating(false);
+    }
+  }
+
   return (
     <View>
       <View style={styles.inputRow}>
@@ -94,7 +115,16 @@ function GeocodeField({
           onEndEditing={handleEndEditing}
           returnKeyType="done"
         />
+        <Pressable
+          onPress={handleLocate}
+          style={styles.locate}
+          accessibilityLabel={`${placeholder}使用目前位置`}
+          disabled={locating}
+        >
+          <Text style={locating ? styles.locateIconDisabled : styles.locateIcon}>🧭</Text>
+        </Pressable>
       </View>
+      {locating && <Text style={styles.hint}>定位中…</Text>}
       {value.loading && <Text style={styles.hint}>搜尋中…</Text>}
       {!value.loading && value.searched && value.candidates.length === 0 && (
         <Text style={styles.hint}>找不到地點</Text>
@@ -164,6 +194,9 @@ const styles = StyleSheet.create({
   inputRow: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: "#ccc", borderRadius: 8 },
   inputIcon: { fontSize: 16, paddingLeft: 10 },
   input: { flex: 1, padding: 10 },
+  locate: { paddingHorizontal: 10, paddingVertical: 10 },
+  locateIcon: { fontSize: 16 },
+  locateIconDisabled: { fontSize: 16, opacity: 0.4 },
   hint: { fontSize: 12, color: "#666", paddingHorizontal: 4 },
   selectedHint: { fontSize: 12, color: "#2e9e5b", paddingHorizontal: 4 },
   approxHint: { fontSize: 12, color: "#b7791f", paddingHorizontal: 4 },

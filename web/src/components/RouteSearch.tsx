@@ -46,6 +46,31 @@ function GeocodeField({
   value: FieldState;
   onChange: React.Dispatch<React.SetStateAction<FieldState>>;
 }) {
+  const [locating, setLocating] = useState(false);
+  const [locateError, setLocateError] = useState(false);
+
+  function handleLocate() {
+    // Geolocation requires a secure context (https or localhost); on plain
+    // http LAN origins the API is absent — surface it as the same error.
+    if (!navigator.geolocation) {
+      setLocateError(true);
+      return;
+    }
+    setLocateError(false);
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocating(false);
+        handleSelect({ name: "目前位置", lat: pos.coords.latitude, lng: pos.coords.longitude });
+      },
+      () => {
+        setLocating(false);
+        setLocateError(true);
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
+
   async function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
     // Read the DOM value directly — with an uncontrolled input it is the
     // single source of truth (state may lag by one IME commit at blur time).
@@ -70,6 +95,7 @@ function GeocodeField({
   }
 
   function handleChangeText(text: string) {
+    setLocateError(false);
     onChange((prev) => ({ ...prev, text, candidates: [], selected: null, searched: false, lastQueried: null }));
   }
 
@@ -116,7 +142,19 @@ function GeocodeField({
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
         />
+        <button
+          type="button"
+          className="rr-locate"
+          onClick={handleLocate}
+          disabled={locating}
+          title="使用目前位置"
+          aria-label={`${placeholder}使用目前位置`}
+        >
+          🧭
+        </button>
       </div>
+      {locating && <div className="rr-hint">定位中…</div>}
+      {locateError && <div className="rr-hint rr-locate-error">無法取得定位，請允許瀏覽器使用位置權限</div>}
       {value.loading && <div className="rr-hint">搜尋中…</div>}
       {!value.loading && value.searched && value.candidates.length === 0 && (
         <div className="rr-hint">找不到地點</div>

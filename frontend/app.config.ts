@@ -16,7 +16,13 @@ const config: ExpoConfig = {
   android: {
     package: "com.rainroute.app",
   },
-  plugins: ["@maplibre/maplibre-react-native"],
+  plugins: [
+    "@maplibre/maplibre-react-native",
+    [
+      "expo-location",
+      { locationWhenInUsePermission: "RainRoute 需要你的位置，才能以目前位置作為出發地或目的地。" },
+    ],
+  ],
   extra: {
     // Override per-device; for the NUC use the Tailscale IP, e.g. http://100.x.x.x:8000
     backendBaseUrl: process.env.RAINROUTE_BACKEND_URL ?? "http://localhost:8000",

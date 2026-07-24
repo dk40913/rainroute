@@ -131,6 +131,36 @@ describe("RouteSearch dropdown", () => {
     expect(submit).toHaveProperty("disabled", true);
   });
 
+  it("locate button fills the field with 目前位置 and selects the coordinates", async () => {
+    const getCurrentPosition = vi.fn((success: PositionCallback) =>
+      success({ coords: { latitude: 25.05, longitude: 121.55 } } as GeolocationPosition),
+    );
+    vi.stubGlobal("navigator", { ...navigator, geolocation: { getCurrentPosition } });
+    const onSubmit = vi.fn();
+    render(<RouteSearch onSubmit={onSubmit} />);
+
+    const origin = screen.getByPlaceholderText("出發地") as HTMLInputElement;
+    await userEvent.setup().click(screen.getByRole("button", { name: "出發地使用目前位置" }));
+
+    expect(origin.value).toBe("目前位置");
+    await screen.findByText("✓ 目前位置");
+    vi.unstubAllGlobals();
+  });
+
+  it("locate failure shows an error hint instead of selecting anything", async () => {
+    const getCurrentPosition = vi.fn((_s: PositionCallback, error?: PositionErrorCallback) =>
+      error?.({ code: 1, message: "denied" } as GeolocationPositionError),
+    );
+    vi.stubGlobal("navigator", { ...navigator, geolocation: { getCurrentPosition } });
+    render(<RouteSearch onSubmit={vi.fn()} />);
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "出發地使用目前位置" }));
+
+    await screen.findByText("無法取得定位，請允許瀏覽器使用位置權限");
+    expect(screen.getByRole("button", { name: "查詢路線" })).toHaveProperty("disabled", true);
+    vi.unstubAllGlobals();
+  });
+
   it("IME composition: in-progress composition buffer does not leak into committed text", async () => {
     mockedGeocode.mockResolvedValue(candidates);
     render(<RouteSearch onSubmit={vi.fn()} />);
