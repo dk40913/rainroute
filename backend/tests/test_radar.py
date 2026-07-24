@@ -78,6 +78,75 @@ def test_fetch_builds_radar_image():
     assert decoded.getpixel((1, 1))[3] == 0
 
 
+def _meta_at(time: str) -> dict:
+    import copy
+    meta = copy.deepcopy(META)
+    meta["cwaopendata"]["dataset"]["DateTime"] = time
+    return meta
+
+
+@respx.mock
+def test_history_keeps_last_three_distinct_frames(monkeypatch):
+    times = [
+        "2026-07-24T14:00:00+08:00",
+        "2026-07-24T14:10:00+08:00",
+        "2026-07-24T14:10:00+08:00",  # unchanged upstream frame — no duplicate
+        "2026-07-24T14:20:00+08:00",
+        "2026-07-24T14:30:00+08:00",
+    ]
+    respx.get("https://opendata.cwa.gov.tw/fileapi/v1/opendataapi/O-A0058-003").mock(
+        side_effect=[httpx.Response(200, json=_meta_at(t)) for t in times]
+    )
+    respx.get("https://cwa.example/radar.png").mock(
+        return_value=httpx.Response(200, content=_png_bytes((0, 0, 0, 0)))
+    )
+    t, now = _clock()
+    client = RadarClient(Settings(cwa_api_key="k", radar_cache_ttl_s=600), now=now)
+    import asyncio
+    for _ in times:
+        asyncio.run(client.fetch())
+        t["v"] += 601  # step past TTL so every fetch hits upstream
+    assert [f.time for f in client.frames()] == [
+        "2026-07-24T14:10:00+08:00",
+        "2026-07-24T14:20:00+08:00",
+        "2026-07-24T14:30:00+08:00",
+    ]
+
+
+@respx.mock
+def test_motion_uses_latest_pair_and_caches(monkeypatch):
+    import app.radar as radar_mod
+
+    calls = []
+    sentinel = object()
+
+    def fake_estimate(older, newer):
+        calls.append((older.time, newer.time))
+        return sentinel
+
+    monkeypatch.setattr(radar_mod, "estimate_motion", fake_estimate)
+
+    times = ["2026-07-24T14:00:00+08:00", "2026-07-24T14:10:00+08:00"]
+    respx.get("https://opendata.cwa.gov.tw/fileapi/v1/opendataapi/O-A0058-003").mock(
+        side_effect=[httpx.Response(200, json=_meta_at(t)) for t in times]
+    )
+    respx.get("https://cwa.example/radar.png").mock(
+        return_value=httpx.Response(200, content=_png_bytes((0, 0, 0, 0)))
+    )
+    t, now = _clock()
+    client = RadarClient(Settings(cwa_api_key="k", radar_cache_ttl_s=600), now=now)
+    import asyncio
+
+    asyncio.run(client.fetch())
+    assert client.motion() is None  # single frame -> no motion yet
+
+    t["v"] += 601
+    asyncio.run(client.fetch())
+    assert client.motion() is sentinel
+    assert client.motion() is sentinel  # second call served from cache
+    assert calls == [("2026-07-24T14:00:00+08:00", "2026-07-24T14:10:00+08:00")]
+
+
 @respx.mock
 def test_cache_prevents_second_download():
     meta_route = respx.get(

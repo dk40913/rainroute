@@ -9,6 +9,7 @@ dependencies = [
     "pillow>=10.0",
     "pydantic>=2.6",
     "pydantic-settings>=2.2",
+    "numpy>=2.4.6",
 ]
 
 [project.optional-dependencies]

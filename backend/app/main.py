@@ -77,17 +77,26 @@ async def route_endpoint(req: RouteRequest) -> RouteResponse:
 @app.post("/rain", response_model=RainResponse)
 async def rain_endpoint(req: RainRequest) -> RainResponse:
     settings = get_settings()
-    radar = await get_radar_client().fetch()
-    verdict, max_level, wet = classify_route(req.polyline, radar, settings.sample_interval_m)
+    radar_client = get_radar_client()
+    radar = await radar_client.fetch()
+    motion = radar_client.motion()
+    verdict, max_level, wet = classify_route(
+        req.polyline, radar, settings.sample_interval_m,
+        duration_s=req.duration_s, motion=motion,
+    )
     geo = radar.geo
     overlay = Overlay(
         image_url="/radar.png",
         bbox=(geo.left_lon, geo.bottom_lat, geo.right_lon, geo.top_lat),
     )
+    wet_etas = [w.eta_min for w in wet if w.eta_min is not None]
     return RainResponse(
         verdict=verdict,
         max_level=max_level.label,
         wet_segments=wet,
         radar_time=radar.time,
         overlay=overlay,
+        nowcast=motion is not None and req.duration_s is not None,
+        rain_start_min=min(wet_etas) if wet_etas else None,
+        rain_end_min=max(wet_etas) if wet_etas else None,
     )

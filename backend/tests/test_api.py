@@ -4,7 +4,7 @@ from PIL import Image
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.models import GeoBox, GeocodeCandidate, RouteResponse
+from app.models import GeoBox, GeocodeCandidate, Motion, RouteResponse
 from app.classify import RadarImage
 from app.routing import RouteNotFoundError
 
@@ -50,12 +50,17 @@ def test_route_endpoint_no_route_found():
     assert resp.status_code == 422
 
 
+def _fake_radar_client(radar, motion=None):
+    fake = AsyncMock()
+    fake.fetch = AsyncMock(return_value=radar)
+    fake.motion = lambda: motion
+    return fake
+
+
 def test_rain_endpoint_heavy():
     radar = RadarImage(image=Image.new("RGBA", (50, 50), (255, 0, 0, 255)),
                        geo=GEO, time="2026-07-21T14:30:00+08:00")
-    fake_client = AsyncMock()
-    fake_client.fetch = AsyncMock(return_value=radar)
-    with patch("app.main.get_radar_client", return_value=fake_client):
+    with patch("app.main.get_radar_client", return_value=_fake_radar_client(radar)):
         resp = client.post("/rain", json={"polyline": [[25.0, 121.0], [25.05, 121.0]]})
     body = resp.json()
     assert body["verdict"] == "raincoat_recommended"
@@ -63,6 +68,38 @@ def test_rain_endpoint_heavy():
     assert body["overlay"]["bbox"] == [115.0, 17.75, 126.5, 29.25]
     assert body["overlay"]["image_url"] == "/radar.png"
     assert body["radar_time"] == "2026-07-21T14:30:00+08:00"
+    assert body["nowcast"] is False
+    assert body["rain_start_min"] is None
+
+
+def test_rain_endpoint_with_duration_and_motion_reports_rain_window():
+    radar = RadarImage(image=Image.new("RGBA", (50, 50), (255, 0, 0, 255)),
+                       geo=GEO, time="2026-07-21T14:30:00+08:00")
+    fake = _fake_radar_client(radar, motion=Motion(dlat_per_s=0.0, dlng_per_s=0.0))
+    with patch("app.main.get_radar_client", return_value=fake):
+        resp = client.post("/rain", json={
+            "polyline": [[25.0, 121.0], [25.05, 121.0]],
+            "duration_s": 1200,
+        })
+    body = resp.json()
+    assert body["nowcast"] is True
+    assert body["rain_start_min"] == 0
+    assert body["rain_end_min"] == 20
+    assert body["wet_segments"][0]["eta_min"] == 0
+
+
+def test_rain_endpoint_duration_without_motion_still_reports_window():
+    radar = RadarImage(image=Image.new("RGBA", (50, 50), (255, 0, 0, 255)),
+                       geo=GEO, time="2026-07-21T14:30:00+08:00")
+    with patch("app.main.get_radar_client", return_value=_fake_radar_client(radar)):
+        resp = client.post("/rain", json={
+            "polyline": [[25.0, 121.0], [25.05, 121.0]],
+            "duration_s": 1200,
+        })
+    body = resp.json()
+    assert body["nowcast"] is False  # cold start: fewer than two frames yet
+    assert body["rain_start_min"] == 0
+    assert body["rain_end_min"] == 20
 
 
 def test_overlay_endpoint():

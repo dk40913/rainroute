@@ -9,6 +9,8 @@ from PIL import Image
 from app.config import Settings
 from app.models import GeoBox
 from app.classify import RadarImage
+from app.models import Motion
+from app.nowcast import estimate_motion
 from app.palette import strip_non_echo
 
 # Verified against the real CWA API on 2026-07-22.
@@ -24,6 +26,9 @@ class RadarClient:
         self._now = now
         self._cache: Optional[RadarImage] = None
         self._fetched_at: float = -1e18
+        self._history: list[RadarImage] = []
+        self._motion: Optional[Motion] = None
+        self._motion_key: Optional[tuple[str, str]] = None
 
     def _image_url(self, meta: dict) -> str:
         ds = meta["cwaopendata"]["dataset"]
@@ -63,4 +68,22 @@ class RadarClient:
         radar = RadarImage(image=image, geo=self._parse_geo(meta), time=self._issue_time(meta), png_bytes=png_bytes)
         self._cache = radar
         self._fetched_at = self._now()
+        if not self._history or self._history[-1].time != radar.time:
+            self._history.append(radar)
+            del self._history[:-3]
         return radar
+
+    def frames(self) -> list[RadarImage]:
+        return list(self._history)
+
+    def motion(self) -> Optional[Motion]:
+        """Rain-field velocity from the latest frame pair; None until two
+        distinct frames have been seen (≈10-20 min after startup)."""
+        if len(self._history) < 2:
+            return None
+        older, newer = self._history[-2], self._history[-1]
+        key = (older.time, newer.time)
+        if key != self._motion_key:
+            self._motion = estimate_motion(older, newer)
+            self._motion_key = key
+        return self._motion

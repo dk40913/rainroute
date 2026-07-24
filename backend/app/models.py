@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from enum import IntEnum
 from pydantic import BaseModel
 
@@ -23,6 +24,13 @@ class GeoBox(BaseModel):
     right_lon: float
     top_lat: float
     bottom_lat: float
+
+
+@dataclass(frozen=True)
+class Motion:
+    """Rain-field velocity in degrees per second (east and north positive)."""
+    dlat_per_s: float
+    dlng_per_s: float
 
 
 class GeocodeRequest(BaseModel):
@@ -51,6 +59,8 @@ class RouteResponse(BaseModel):
 
 class RainRequest(BaseModel):
     polyline: list[tuple[float, float]]
+    # Route duration from /route; enables arrival-time (nowcast) sampling.
+    duration_s: float | None = None
 
 
 class WetSegment(BaseModel):
@@ -58,6 +68,9 @@ class WetSegment(BaseModel):
     lat: float
     lng: float
     level: str
+    # Minutes after departure the rider reaches this point; only set when the
+    # rain request included the route duration.
+    eta_min: int | None = None
 
 
 class Overlay(BaseModel):
@@ -75,3 +88,8 @@ class RainResponse(BaseModel):
     wet_segments: list[WetSegment]
     radar_time: str
     overlay: Overlay
+    # True when the verdict used arrival-time advection (needs duration_s in
+    # the request plus two radar frames of motion history on the server).
+    nowcast: bool = False
+    rain_start_min: int | None = None
+    rain_end_min: int | None = None
