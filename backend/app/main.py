@@ -1,3 +1,6 @@
+import asyncio
+import contextlib
+
 import httpx
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,7 +16,27 @@ from app.geocode import geocode
 from app.routing import plan_route, RouteNotFoundError
 from app.classify import classify_route
 
-app = FastAPI(title="RainRoute API")
+async def _keep_radar_warm() -> None:
+    # Motion estimation needs two consecutive frames in history. Without a
+    # background refresh, frames only accumulate when user requests happen to
+    # arrive 10+ minutes apart — so nowcast stayed cold after every restart or
+    # host sleep. Poll just past the cache TTL so each cycle hits upstream.
+    while True:
+        with contextlib.suppress(Exception):
+            await get_radar_client().fetch()
+        await asyncio.sleep(get_settings().radar_cache_ttl_s + 30)
+
+
+@contextlib.asynccontextmanager
+async def _lifespan(app: FastAPI):
+    warmer = asyncio.create_task(_keep_radar_warm())
+    yield
+    warmer.cancel()
+    with contextlib.suppress(asyncio.CancelledError):
+        await warmer
+
+
+app = FastAPI(title="RainRoute API", lifespan=_lifespan)
 
 # Configure CORS
 settings = get_settings()

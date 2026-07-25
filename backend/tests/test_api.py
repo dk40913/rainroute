@@ -116,6 +116,16 @@ def test_overlay_endpoint():
     assert body["radar_time"] == "2026-07-21T14:30:00+08:00"
 
 
+def test_lifespan_starts_and_stops_radar_warmer():
+    radar = RadarImage(image=Image.new("RGBA", (50, 50), (0, 0, 0, 0)),
+                       geo=GEO, time="2026-07-21T14:30:00+08:00")
+    fake = _fake_radar_client(radar)
+    with patch("app.main.get_radar_client", return_value=fake):
+        with TestClient(app):
+            pass  # entering runs lifespan startup, exiting cancels the warmer
+    assert fake.fetch.await_count >= 1
+
+
 def test_cors_headers():
     """Test that CORS headers are present in response."""
     resp = client.get("/health", headers={"origin": "http://example.com"})
