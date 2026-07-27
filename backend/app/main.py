@@ -10,7 +10,7 @@ from app.config import get_settings
 from app.deps import get_radar_client
 from app.models import (
     GeocodeRequest, RouteRequest, RainRequest, RouteResponse,
-    RainResponse, Overlay, OverlayResponse,
+    RainResponse, Overlay, OverlayResponse, MotionVector,
 )
 from app.geocode import geocode
 from app.routing import plan_route, RouteNotFoundError
@@ -123,4 +123,5 @@ async def rain_endpoint(req: RainRequest) -> RainResponse:
         rain_start_min=min(wet_etas) if wet_etas else None,
         rain_end_min=max(wet_etas) if wet_etas else None,
         rain_nearby=rain_nearby,
+        motion=MotionVector(dlat_per_s=motion.dlat_per_s, dlng_per_s=motion.dlng_per_s) if motion else None,
     )

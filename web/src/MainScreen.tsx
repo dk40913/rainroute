@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { RouteSearch } from "./components/RouteSearch";
 import { RainMap } from "./components/RainMap";
 import { RainLegend } from "./components/RainLegend";
@@ -15,9 +15,44 @@ export function MainScreen() {
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [simT, setSimT] = useState<number | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const holdRef = useRef<number | null>(null);
+
+  const PLAYBACK_WALL_MS = 10_000;
+
+  function stopPlayback() {
+    if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+    if (holdRef.current != null) window.clearTimeout(holdRef.current);
+    rafRef.current = null;
+    holdRef.current = null;
+    setSimT(null);
+  }
+
+  useEffect(() => stopPlayback, []);
+
+  function playForecast() {
+    if (!route) return;
+    stopPlayback();
+    const durS = route.durationS;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const frac = (now - start) / PLAYBACK_WALL_MS;
+      if (frac >= 1) {
+        setSimT(durS);
+        rafRef.current = null;
+        holdRef.current = window.setTimeout(() => setSimT(null), 1500);
+        return;
+      }
+      setSimT(frac * durS);
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+  }
 
   async function onSubmit(origin: GeocodeCandidate, destination: GeocodeCandidate) {
     if (loading) return;
+    stopPlayback();
     setRoute(null);
     setRain(null);
     setOverlay(null);
@@ -37,6 +72,7 @@ export function MainScreen() {
 
   async function onShowRadar() {
     if (loading) return;
+    stopPlayback();
     setRoute(null);
     setRain(null);
     setOverlay(null);
@@ -57,8 +93,21 @@ export function MainScreen() {
       <RouteSearch onSubmit={onSubmit} onShowRadar={onShowRadar} history={history} disabled={loading} />
       {error && <div className="rr-error">{error}</div>}
       <div className="rr-map-wrap">
-        <RainMap route={route} overlay={rain?.overlay ?? overlay} />
+        <RainMap
+          route={route}
+          overlay={rain?.overlay ?? overlay}
+          motion={rain?.motion ?? null}
+          durationS={route?.durationS ?? null}
+          simT={simT}
+        />
         <RainLegend />
+        {route && rain && !loading && (
+          simT == null ? (
+            <button className="rr-play" onClick={playForecast}>▶ 播放預測</button>
+          ) : (
+            <div className="rr-play rr-play-label">出發後 +{Math.round(simT / 60)} 分</div>
+          )
+        )}
         {loading && <div className="rr-loading">讀取中…</div>}
       </div>
     </div>

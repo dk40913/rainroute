@@ -56,6 +56,7 @@ describe("checkRain", () => {
       rainStartMin: null,
       rainEndMin: null,
       rainNearby: false,
+      motion: null,
     });
   });
 });

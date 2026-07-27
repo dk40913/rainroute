@@ -78,6 +78,11 @@ class Overlay(BaseModel):
     bbox: tuple[float, float, float, float]  # (west, south, east, north)
 
 
+class MotionVector(BaseModel):
+    dlat_per_s: float
+    dlng_per_s: float
+
+
 class OverlayResponse(Overlay):
     radar_time: str
 
@@ -96,3 +101,5 @@ class RainResponse(BaseModel):
     # Route itself is dry but echo exists within ~2 km of it — nearby cells
     # can drift or grow onto the route within a ride.
     rain_nearby: bool = False
+    # Estimated rain-field velocity (deg/s); lets clients animate the overlay.
+    motion: MotionVector | None = None

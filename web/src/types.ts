@@ -4,6 +4,7 @@ export type RouteResult = { polyline: [number, number][]; distanceM: number; dur
 export type WetSegment = { index: number; lat: number; lng: number; level: string; eta_min?: number | null };
 export type Overlay = { imageUrl: string; bbox: [number, number, number, number] };
 export type OverlayResult = Overlay & { radarTime: string };
+export type MotionVector = { dlatPerS: number; dlngPerS: number };
 export type RainResult = {
   verdict: "raincoat_recommended" | "no_raincoat_needed";
   maxLevel: string;
@@ -14,4 +15,5 @@ export type RainResult = {
   rainStartMin?: number | null;
   rainEndMin?: number | null;
   rainNearby?: boolean;
+  motion?: MotionVector | null;
 };

@@ -8,7 +8,8 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 
 setWorkerUrl(maplibreWorkerUrl);
-import type { Overlay, RouteResult } from "../types";
+import type { MotionVector, Overlay, RouteResult } from "../types";
+import { cumulativeMeters, slicePolyline, shiftedBbox } from "../animate";
 import { resolveUrl } from "../api";
 
 type GeoJSONLineFeature = {
@@ -24,11 +25,33 @@ const ROUTE_LAYER_ID = "route-line";
 const RADAR_SOURCE_ID = "radar";
 const RADAR_LAYER_ID = "radar-layer";
 
-export function RainMap({ route, overlay }: { route: RouteResult | null; overlay: Overlay | null }) {
+function lineFeature(coords: [number, number][]): GeoJSONLineFeature {
+  return {
+    type: "Feature",
+    geometry: { type: "LineString", coordinates: coords.map(([lat, lng]) => [lng, lat]) },
+    properties: {},
+  };
+}
+
+export function RainMap({
+  route,
+  overlay,
+  motion,
+  durationS,
+  simT,
+}: {
+  route: RouteResult | null;
+  overlay: Overlay | null;
+  motion?: MotionVector | null;
+  durationS?: number | null;
+  simT?: number | null;
+}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const originMarkerRef = useRef<Marker | null>(null);
   const destMarkerRef = useRef<Marker | null>(null);
+  const riderMarkerRef = useRef<Marker | null>(null);
+  const cumRef = useRef<number[]>([]);
   const [ready, setReady] = useState(false);
 
   // Initialize the map once.
@@ -74,11 +97,8 @@ export function RainMap({ route, overlay }: { route: RouteResult | null; overlay
       return;
     }
 
-    const lineGeoJSON: GeoJSONLineFeature = {
-      type: "Feature",
-      geometry: { type: "LineString", coordinates: route.polyline.map(([lat, lng]) => [lng, lat]) },
-      properties: {},
-    };
+    cumRef.current = cumulativeMeters(route.polyline);
+    const lineGeoJSON = lineFeature(route.polyline);
 
     const existingSource = map.getSource(ROUTE_SOURCE_ID) as GeoJSONSource | undefined;
     if (existingSource) {
@@ -152,6 +172,49 @@ export function RainMap({ route, overlay }: { route: RouteResult | null; overlay
       );
     }
   }, [overlay, ready]);
+
+  // Forecast playback: grow the route line to the rider's simulated position
+  // and translate the radar overlay along the estimated motion vector.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const routeSource = map.getSource(ROUTE_SOURCE_ID) as GeoJSONSource | undefined;
+    const radarSource = map.getSource(RADAR_SOURCE_ID) as ImageSource | undefined;
+
+    const cornersFor = (bbox: [number, number, number, number]) => {
+      const [w, s, e, n] = bbox;
+      return [[w, n], [e, n], [e, s], [w, s]] as [
+        [number, number], [number, number], [number, number], [number, number],
+      ];
+    };
+
+    if (simT == null || !route) {
+      // Playback finished/cancelled — restore the live view.
+      if (route && routeSource) routeSource.setData(lineFeature(route.polyline));
+      if (overlay && radarSource) radarSource.setCoordinates(cornersFor(overlay.bbox));
+      riderMarkerRef.current?.remove();
+      riderMarkerRef.current = null;
+      return;
+    }
+
+    const frac = durationS ? Math.min(1, simT / durationS) : 0;
+    const sliced = slicePolyline(route.polyline, cumRef.current, frac);
+    if (routeSource) routeSource.setData(lineFeature(sliced));
+
+    const [headLat, headLng] = sliced[sliced.length - 1];
+    if (!riderMarkerRef.current) {
+      const el = document.createElement("div");
+      el.className = "rr-rider";
+      el.textContent = "🛵";
+      riderMarkerRef.current = new Marker({ element: el }).setLngLat([headLng, headLat]).addTo(map);
+    } else {
+      riderMarkerRef.current.setLngLat([headLng, headLat]);
+    }
+
+    if (overlay && motion && radarSource) {
+      radarSource.setCoordinates(cornersFor(shiftedBbox(overlay.bbox, motion, simT)));
+    }
+  }, [simT, route, overlay, motion, durationS, ready]);
 
   return <div ref={containerRef} style={{ width: "100%", height: "100%" }} />;
 }

@@ -70,6 +70,7 @@ def test_rain_endpoint_heavy():
     assert body["radar_time"] == "2026-07-21T14:30:00+08:00"
     assert body["nowcast"] is False
     assert body["rain_start_min"] is None
+    assert body["motion"] is None
 
 
 def test_rain_endpoint_with_duration_and_motion_reports_rain_window():
@@ -86,6 +87,7 @@ def test_rain_endpoint_with_duration_and_motion_reports_rain_window():
     assert body["rain_start_min"] == 0
     assert body["rain_end_min"] == 20
     assert body["wet_segments"][0]["eta_min"] == 0
+    assert body["motion"] == {"dlat_per_s": 0.0, "dlng_per_s": 0.0}
 
 
 def test_rain_endpoint_duration_without_motion_still_reports_window():

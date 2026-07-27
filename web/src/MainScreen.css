@@ -20,6 +20,33 @@
   min-height: 0;
 }
 
+.rr-play {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 5;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1565c0;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.rr-play-label {
+  color: #222;
+  cursor: default;
+}
+
+.rr-rider {
+  font-size: 22px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+}
+
 .rr-loading {
   position: absolute;
   inset: 0;
@@ -38,6 +65,13 @@
   }
   .rr-loading {
     background: rgba(20, 20, 20, 0.5);
+    color: #eee;
+  }
+  .rr-play {
+    background: rgba(30, 30, 30, 0.92);
+    color: #7ab3f0;
+  }
+  .rr-play-label {
     color: #eee;
   }
 }

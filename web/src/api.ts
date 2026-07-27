@@ -11,6 +11,7 @@ type RainWire = {
   rain_start_min?: number | null;
   rain_end_min?: number | null;
   rain_nearby?: boolean;
+  motion?: { dlat_per_s: number; dlng_per_s: number } | null;
 };
 
 async function post<T>(path: string, body: unknown): Promise<T> {
@@ -44,6 +45,7 @@ export async function checkRain(polyline: [number, number][], durationS?: number
     rainStartMin: d.rain_start_min ?? null,
     rainEndMin: d.rain_end_min ?? null,
     rainNearby: d.rain_nearby ?? false,
+    motion: d.motion ? { dlatPerS: d.motion.dlat_per_s, dlngPerS: d.motion.dlng_per_s } : null,
   };
 }
 
