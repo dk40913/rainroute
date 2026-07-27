@@ -34,6 +34,24 @@ def _wrap(index: int) -> int:
     return index - GRID if index > GRID // 2 else index
 
 
+def _subpixel(corr: np.ndarray, dy: int, dx: int) -> tuple[float, float]:
+    """Parabolic peak refinement: displacements slower than one cell per frame
+    (~9 km/h) would otherwise round to zero. Wrapped negative/overflow indices
+    are exactly the circular neighbours phase correlation needs."""
+    def offset(cm: float, c0: float, cp: float) -> float:
+        denom = 2 * c0 - cp - cm
+        if denom <= 0:
+            return 0.0
+        return max(-0.5, min(0.5, (cp - cm) / (2 * denom)))
+
+    # After _wrap, dy/dx ∈ (-GRID/2, GRID/2], so dy±1 stays inside numpy's
+    # index range and negative indices land on the correct circular neighbour.
+    c0 = float(corr[dy, dx])
+    oy = offset(float(corr[dy - 1, dx]), c0, float(corr[dy + 1, dx]))
+    ox = offset(float(corr[dy, dx - 1]), c0, float(corr[dy, dx + 1]))
+    return dy + oy, dx + ox
+
+
 def estimate_motion(older: RadarImage, newer: RadarImage) -> Motion | None:
     dt_s = (datetime.fromisoformat(newer.time) - datetime.fromisoformat(older.time)).total_seconds()
     if dt_s <= 0 or dt_s > MAX_DT_S:
@@ -55,8 +73,8 @@ def estimate_motion(older: RadarImage, newer: RadarImage) -> Motion | None:
     if peak < MIN_PEAK:
         return None
 
-    dy, dx = np.unravel_index(int(corr.argmax()), corr.shape)
-    dy, dx = _wrap(int(dy)), _wrap(int(dx))
+    iy, ix = np.unravel_index(int(corr.argmax()), corr.shape)
+    dy, dx = _subpixel(corr, _wrap(int(iy)), _wrap(int(ix)))
 
     geo = newer.geo
     dlng = dx * (geo.right_lon - geo.left_lon) / GRID

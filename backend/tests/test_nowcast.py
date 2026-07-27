@@ -31,6 +31,18 @@ def test_recovers_a_known_shift():
     assert motion.dlat_per_s == pytest.approx(0.1 / DT, rel=0.15)
 
 
+def test_subpixel_refinement_catches_slow_drift():
+    # 2 px in a 360 px frame = 2.5 correlation cells at GRID=450 — a fractional
+    # displacement that integer peak-picking would round to 2 or 3 cells.
+    older = frame(T0, [(150, 200), (240, 120)])
+    newer = frame(T1, [(152, 200), (242, 120)])
+    motion = estimate_motion(older, newer)
+    assert motion is not None
+    true_dlng = (2 / 60) / DT  # 2 px = 2/60 deg over 10 min
+    assert motion.dlng_per_s == pytest.approx(true_dlng, rel=0.08)
+    assert abs(motion.dlat_per_s) < true_dlng * 0.1
+
+
 def test_stationary_rain_gives_near_zero_motion():
     older = frame(T0, [(150, 200)])
     newer = frame(T1, [(150, 200)])
