@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cumulativeMeters, slicePolyline, shiftedBbox } from "./animate";
+import { cumulativeMeters, motionSummary, slicePolyline, shiftedBbox } from "./animate";
 
 // Straight north line at lng 121: 0.01° lat ≈ 1113 m per segment.
 const LINE: [number, number][] = [
@@ -37,6 +37,21 @@ describe("slicePolyline", () => {
 
   it("frac 1 returns the full polyline", () => {
     expect(slicePolyline(LINE, cum, 1)).toEqual(LINE);
+  });
+});
+
+describe("motionSummary", () => {
+  it("reports warm-up when no vector", () => {
+    expect(motionSummary(null)).toContain("暖機中");
+  });
+
+  it("reports near-stationary under 1 km/h", () => {
+    expect(motionSummary({ dlatPerS: 5e-7, dlngPerS: 0 })).toBe("雨區目前接近靜止");
+  });
+
+  it("reports speed and octant arrow", () => {
+    // ~0.0001 deg/s north ≈ 40 km/h heading ↑
+    expect(motionSummary({ dlatPerS: 1e-4, dlngPerS: 0 })).toBe("雨區以 40 km/h ↑ 移動");
   });
 });
 

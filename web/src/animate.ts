@@ -45,6 +45,20 @@ export function slicePolyline(
   return [...polyline.slice(0, i + 1), head];
 }
 
+const ARROWS = ["↑", "↗", "→", "↘", "↓", "↙", "←", "↖"];
+
+/** Human-readable summary of the rain-field motion for the playback UI. */
+export function motionSummary(motion: MotionVector | null | undefined): string {
+  if (!motion) return "雨區移動向量暖機中（約 10 分鐘）";
+  const vNorth = motion.dlatPerS * 111.0 * 3600;
+  const vEast = motion.dlngPerS * 111.0 * Math.cos((23.5 * Math.PI) / 180) * 3600;
+  const speed = Math.hypot(vNorth, vEast);
+  if (speed < 1) return "雨區目前接近靜止";
+  const bearing = ((Math.atan2(vEast, vNorth) * 180) / Math.PI + 360) % 360;
+  const arrow = ARROWS[Math.round(bearing / 45) % 8];
+  return `雨區以 ${speed.toFixed(speed < 10 ? 1 : 0)} km/h ${arrow} 移動`;
+}
+
 /** Overlay bbox translated along the motion vector after `tS` seconds. */
 export function shiftedBbox(
   bbox: [number, number, number, number],

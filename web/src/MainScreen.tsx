@@ -3,6 +3,7 @@ import { RouteSearch } from "./components/RouteSearch";
 import { RainMap } from "./components/RainMap";
 import { RainLegend } from "./components/RainLegend";
 import { VerdictBanner } from "./components/VerdictBanner";
+import { motionSummary } from "./animate";
 import { planRoute, checkRain, fetchOverlay } from "./api";
 import { loadHistory, saveHistory, type HistoryEntry } from "./history";
 import type { RouteResult, RainResult, GeocodeCandidate, Overlay } from "./types";
@@ -102,11 +103,14 @@ export function MainScreen() {
         />
         <RainLegend />
         {route && rain && !loading && (
-          simT == null ? (
-            <button className="rr-play" onClick={playForecast}>▶ 播放預測</button>
-          ) : (
-            <div className="rr-play rr-play-label">出發後 +{Math.round(simT / 60)} 分</div>
-          )
+          <div className="rr-play-stack">
+            {simT == null ? (
+              <button className="rr-play" onClick={playForecast}>▶ 播放預測</button>
+            ) : (
+              <div className="rr-play rr-play-label">出發後 +{Math.round(simT / 60)} 分</div>
+            )}
+            <div className="rr-motion-note">{motionSummary(rain.motion)}</div>
+          </div>
         )}
         {loading && <div className="rr-loading">讀取中…</div>}
       </div>

@@ -20,11 +20,27 @@
   min-height: 0;
 }
 
-.rr-play {
+.rr-play-stack {
   position: absolute;
   top: 12px;
   left: 12px;
   z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.rr-motion-note {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  color: #444;
+  font-size: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.rr-play {
   padding: 8px 14px;
   border: none;
   border-radius: 999px;
@@ -73,5 +89,9 @@
   }
   .rr-play-label {
     color: #eee;
+  }
+  .rr-motion-note {
+    background: rgba(30, 30, 30, 0.85);
+    color: #bbb;
   }
 }
